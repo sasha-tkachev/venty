@@ -23,6 +23,6 @@ def dummy_events(
             {
                 "type": type_,
                 "source": source,
-                "id": uuid5(namespace=seed, name=str(i)),
+                "id": str(uuid5(namespace=seed, name=str(i))),
             }
         )
