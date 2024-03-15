@@ -2,7 +2,7 @@ from dataclasses import dataclass
 from datetime import timedelta
 from typing import Iterable, Optional, Dict
 from cloudevents.abstract import CloudEvent
-from venty.types import StreamVersion, StreamName, CommitPosition
+from venty.strong_types import StreamVersion, StreamName, CommitPosition
 import sys
 
 

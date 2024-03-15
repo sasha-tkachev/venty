@@ -1,7 +1,7 @@
 from typing import Iterable
 from uuid import UUID, uuid5
 from datetime import timedelta
-from venty.types import StreamName, EventType
+from venty.strong_types import StreamName, EventType
 from cloudevents.pydantic.v2 import CloudEvent
 import time
 
