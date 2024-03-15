@@ -3,7 +3,7 @@ from typing import List
 from cloudevents.abstract import CloudEvent
 from pydantic import BaseModel, PrivateAttr
 
-from venty.entity import Entity as _Entity
+from venty.entity import Entity as _Entity, EntityId
 from venty.strong_types import StreamVersion, NO_EVENT_VERSION
 
 
@@ -25,8 +25,9 @@ class Entity(BaseModel, _Entity):
     def set_entity_version(self, version: StreamVersion) -> None:
         self.version = version
 
-    def when(self, event: CloudEvent) -> None:
+    @property
+    def entity_id(self) -> EntityId:
         raise NotImplementedError()
 
-    def apply(self, event: CloudEvent) -> None:
+    def when(self, event: CloudEvent) -> None:
         raise NotImplementedError()
