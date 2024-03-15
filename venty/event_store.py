@@ -1,6 +1,7 @@
 from dataclasses import dataclass
 from datetime import timedelta
-from typing import Iterable, Optional, Dict
+from enum import Enum
+from typing import Iterable, Optional, Dict, Union, Literal
 from cloudevents.abstract import CloudEvent
 from venty.strong_types import StreamVersion, StreamName, CommitPosition
 import sys
@@ -20,12 +21,21 @@ class RecordedEvent:
     commit_position: Optional[CommitPosition]
 
 
+class StreamState(Enum):
+    ANY = "ANY"
+    NO_STREAM = "NO_STREAM"
+    EXISTS = "EXISTS"
+
+
+ExpectedVersion = Union[StreamVersion, StreamState]
+
+
 class EventStore:
-    def append_events(
+    def attempt_append_events(
         self,
         stream_name: StreamName,
         *,
-        expected_version: StreamVersion,
+        expected_version: ExpectedVersion,
         events: Iterable[CloudEvent],
         timeout: Optional[timedelta] = None,
     ) -> Optional[CommitPosition]:
@@ -62,41 +72,92 @@ class EventStore:
     def commit_position(self) -> CommitPosition:
         raise NotImplementedError()
 
+    def current_version(
+        self, stream_name: StreamName, *, timeout: Optional[timedelta] = None
+    ) -> Optional[Union[StreamVersion, Literal[StreamState.NO_STREAM]]]:
+        raise NotImplementedError()
 
-def append_event(
+
+def attempt_append_event(
     repo: EventStore,
     stream_name: StreamName,
     *,
-    current_version: StreamVersion,
+    expected_version: ExpectedVersion,
     event: CloudEvent,
     timeout: Optional[timedelta] = None,
-) -> CommitPosition:
+) -> Optional[CommitPosition]:
     """
     Syntax sugar to append a single event to a stream.
     """
-    return repo.append_events(
+    return repo.attempt_append_events(
         stream_name=stream_name,
-        expected_version=current_version,
+        expected_version=expected_version,
         events=(event,),
         timeout=timeout,
     )
+
+
+def attempt_append_events(
+    repo: EventStore,
+    stream_name: StreamName,
+    *,
+    expected_version: ExpectedVersion,
+    events: Iterable[CloudEvent],
+    timeout: Optional[timedelta] = None,
+) -> Optional[CommitPosition]:
+    """
+    Syntax sugar to stay consistent with `append_event`
+    """
+    return repo.attempt_append_events(
+        stream_name=stream_name,
+        expected_version=expected_version,
+        events=events,
+        timeout=timeout,
+    )
+
+
+class WrongExpectedVersion(ValueError):
+    pass
 
 
 def append_events(
     repo: EventStore,
     stream_name: StreamName,
     *,
-    current_version: StreamVersion,
+    expected_version: ExpectedVersion,
     events: Iterable[CloudEvent],
     timeout: Optional[timedelta] = None,
 ) -> CommitPosition:
     """
     Syntax sugar to stay consistent with `append_event`
     """
-    return repo.append_events(
+    result = repo.attempt_append_events(
         stream_name=stream_name,
-        expected_version=current_version,
+        expected_version=expected_version,
         events=events,
+        timeout=timeout,
+    )
+    if result is None:
+        raise WrongExpectedVersion()
+    return result
+
+
+def append_event(
+    repo: EventStore,
+    stream_name: StreamName,
+    *,
+    expected_version: ExpectedVersion,
+    event: CloudEvent,
+    timeout: Optional[timedelta] = None,
+) -> Optional[CommitPosition]:
+    """
+    Syntax sugar to append a single event to a stream.
+    """
+    return append_events(
+        repo=repo,
+        stream_name=stream_name,
+        expected_version=expected_version,
+        events=(event,),
         timeout=timeout,
     )
 
@@ -105,7 +166,7 @@ def read_stream(
     repo: EventStore,
     stream_name: StreamName,
     *,
-    stream_position: StreamVersion,
+    stream_position: Optional[StreamVersion],
     limit: int = sys.maxsize,
     backwards: bool = False,
     timeout: Optional[timedelta] = None,
@@ -119,4 +180,26 @@ def read_stream(
         },
         backwards=backwards,
         timeout=timeout,
+    )
+
+
+def read_stream_no_metadata(
+    repo: EventStore,
+    stream_name: StreamName,
+    *,
+    stream_position: Optional[StreamVersion],
+    limit: int = sys.maxsize,
+    backwards: bool = False,
+    timeout: Optional[timedelta] = None,
+) -> Iterable[CloudEvent]:
+    return (
+        e.event
+        for e in read_stream(
+            repo,
+            stream_name,
+            stream_position=stream_position,
+            limit=limit,
+            backwards=backwards,
+            timeout=timeout,
+        )
     )
