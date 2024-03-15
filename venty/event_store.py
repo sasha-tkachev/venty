@@ -19,7 +19,7 @@ class RecordedEvent:
     commit_position: Optional[CommitPosition]
 
 
-class EventRepo:
+class EventStore:
     def append_events(
         self,
         stream_name: StreamName,
@@ -42,7 +42,7 @@ class EventRepo:
 
 
 def append_event(
-    repo: EventRepo,
+    repo: EventStore,
     stream_name: StreamName,
     *,
     current_version: StreamVersion,
@@ -61,7 +61,7 @@ def append_event(
 
 
 def append_events(
-    repo: EventRepo,
+    repo: EventStore,
     stream_name: StreamName,
     *,
     current_version: StreamVersion,
@@ -80,7 +80,7 @@ def append_events(
 
 
 def read_stream(
-    repo: EventRepo,
+    repo: EventStore,
     stream_name: StreamName,
     *,
     stream_position: StreamVersion,

@@ -1,1 +1,1 @@
-from venty.event_repo import EventRepo
+from venty.event_repo import EventStore
