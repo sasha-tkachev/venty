@@ -1,1 +1,2 @@
-cloudevents[pydantic]
+cloudevents
+more_itertools
