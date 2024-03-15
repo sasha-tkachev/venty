@@ -9,3 +9,4 @@ requests
 uvicorn
 pytest-asyncio
 httpx
+pydantic
