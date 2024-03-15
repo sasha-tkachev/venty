@@ -1,7 +1,22 @@
+from dataclasses import dataclass
 from datetime import timedelta
-from typing import Iterable, Optional
+from typing import Iterable, Optional, Dict
 from cloudevents.abstract import CloudEvent
 from venty.types import StreamVersion, StreamName, CommitPosition
+import sys
+
+
+@dataclass(frozen=True)
+class ReadInstruction:
+    stream_position: Optional[StreamVersion]
+    limit: int = sys.maxsize
+
+
+@dataclass(frozen=True)
+class RecordedEvent:
+    stream_name: StreamName
+    stream_position: StreamVersion
+    commit_position: Optional[CommitPosition]
 
 
 class EventRepo:
@@ -13,7 +28,17 @@ class EventRepo:
         events: Iterable[CloudEvent],
         timeout: Optional[timedelta] = None,
     ) -> CommitPosition:
-        pass
+        raise NotImplementedError()
+
+    def read_streams(
+        self,
+        instructions: Dict[StreamName, ReadInstruction],
+        *,
+        backwards: bool = False,
+        limit: int = sys.maxsize,
+        timeout: Optional[timedelta] = None,
+    ) -> Iterable[RecordedEvent]:
+        raise NotImplementedError()
 
 
 def append_event(
@@ -50,5 +75,26 @@ def append_events(
         stream_name=stream_name,
         current_version=current_version,
         events=events,
+        timeout=timeout,
+    )
+
+
+def read_stream(
+    repo: EventRepo,
+    stream_name: StreamName,
+    *,
+    stream_position: StreamVersion,
+    limit: int = sys.maxsize,
+    backwards: bool = False,
+    timeout: Optional[timedelta] = None,
+) -> Iterable[RecordedEvent]:
+    return repo.read_streams(
+        {
+            stream_name: ReadInstruction(
+                stream_position=stream_position,
+                limit=limit,
+            )
+        },
+        backwards=backwards,
         timeout=timeout,
     )
