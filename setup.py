@@ -34,7 +34,7 @@ if __name__ == "__main__":
             "event",
             "rest",
         ],
-        packages=setuptools.find_packages(),
+        packages=setuptools.find_packages(exclude=["*_test", "*_test.*"]),
         package_data={"venty": ["py.typed"]},
         install_requires=_read_requirements("requirements.txt"),
         classifiers=[
