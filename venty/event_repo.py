@@ -1,8 +1,7 @@
 from datetime import timedelta
 from typing import Iterable, Optional
 from cloudevents.abstract import CloudEvent
-
-from venty.types import Version, StreamName, CommitPosition
+from venty.types import StreamVersion, StreamName, CommitPosition
 
 
 class EventRepo:
@@ -10,7 +9,7 @@ class EventRepo:
         self,
         stream_name: StreamName,
         *,
-        current_version: Version,
+        current_version: StreamVersion,
         events: Iterable[CloudEvent],
         timeout: Optional[timedelta] = None,
     ) -> CommitPosition:
@@ -21,7 +20,7 @@ def append_event(
     repo: EventRepo,
     stream_name: StreamName,
     *,
-    current_version: Version,
+    current_version: StreamVersion,
     event: CloudEvent,
     timeout: Optional[timedelta] = None,
 ) -> CommitPosition:
@@ -40,7 +39,7 @@ def append_events(
     repo: EventRepo,
     stream_name: StreamName,
     *,
-    current_version: Version,
+    current_version: StreamVersion,
     events: Iterable[CloudEvent],
     timeout: Optional[timedelta] = None,
 ) -> CommitPosition:

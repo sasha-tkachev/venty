@@ -1,5 +1,5 @@
 from typing import NewType
 
 StreamName = NewType("StreamName", str)
-Version = NewType("Version", int)
-CommitPosition = NewType("CommitPosition", Version)
+StreamVersion = NewType("StreamVersion", int)
+CommitPosition = NewType("CommitPosition", int)
