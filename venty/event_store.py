@@ -14,6 +14,7 @@ class ReadInstruction:
 
 @dataclass(frozen=True)
 class RecordedEvent:
+    event: CloudEvent
     stream_name: StreamName
     stream_position: StreamVersion
     commit_position: Optional[CommitPosition]
