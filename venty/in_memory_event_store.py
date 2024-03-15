@@ -48,6 +48,8 @@ def _expected_version_correct(
         return stream_version != StreamState.NO_STREAM
     if expected_version == StreamState.NO_STREAM:
         return stream_version == StreamState.NO_STREAM
+    if expected_version == NO_EVENT_VERSION:
+        return stream_version in (StreamState.NO_STREAM, NO_EVENT_VERSION)
     return stream_version == expected_version
 
 
