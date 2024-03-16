@@ -204,7 +204,7 @@ class SqlEventStore(EventStore):
         with self._session_factory() as session:
             result = session.query(func.max(RecordedEventRow.id)).scalar()
             if result is None:
-                result = NO_EVENT_VERSION
+                return NO_EVENT_VERSION
             return CommitPosition(result - 1)  # auto increment starts from 1
 
     def current_version(
