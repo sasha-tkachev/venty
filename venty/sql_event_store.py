@@ -31,7 +31,7 @@ from sqlalchemy import (
     UniqueConstraint,
 )
 from sqlalchemy.ext.declarative import declarative_base
-from sqlalchemy.orm import Session
+from sqlalchemy.orm import Session, aliased
 
 from venty import EventStore
 from venty.event_store import (
@@ -74,18 +74,31 @@ class RecordedEventRow(Base):
 def _stream_metadata(
     stream_name: StreamName, session: Session
 ) -> Tuple[Union[StreamVersion, Literal[StreamState.NO_STREAM]], Optional[int]]:
-    # TODO:
-    stream = (
-        session.query(StreamRow).filter(StreamRow.stream_name == stream_name).first()
+    recorded_event_alias = aliased(RecordedEventRow)
+
+    stream_with_highest_position = (
+        session.query(
+            func.max(recorded_event_alias.stream_position).label(
+                "highest_stream_position"
+            ),
+            StreamRow.id,
+        )
+        .join(
+            recorded_event_alias,
+            StreamRow.id == recorded_event_alias.stream_id,
+            isouter=True,
+        )
+        .filter(StreamRow.stream_name == stream_name)
+        .group_by(StreamRow.id)
+        .first()
     )
-    if stream is None:
+
+    # Check if the stream exists and return the appropriate values
+    if stream_with_highest_position is None:
         return StreamState.NO_STREAM, None
-    highest_stream_position = (
-        session.query(func.max(RecordedEventRow.stream_position))
-        .filter(RecordedEventRow.stream_id == stream.id)
-        .scalar()
-    )
-    return StreamVersion(highest_stream_position), stream.id
+    else:
+        highest_stream_position, stream_id = stream_with_highest_position
+        return StreamVersion(highest_stream_position), stream_id
 
 
 def _record_event_rows(
