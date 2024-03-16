@@ -26,3 +26,10 @@ def iterate_with_timeout(
             if _timeout_reached(start, timeout):
                 raise TimeoutError()
             yield i
+
+
+def assert_timeout_not_supported(timeout: Optional[timedelta]):
+    assert timeout is None, (
+        "Timeout is not supported for this function, please submit a feature "
+        "request at https://github.com/sasha-tkachev/venty/issues"
+    )

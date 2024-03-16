@@ -1,4 +1,5 @@
 from venty.settings import SQL_STREAMS_TABLE_NAME, SQL_RECORDED_EVENTS_TABLE_NAME
+from venty.timing import assert_timeout_not_supported
 
 try:
     import sqlalchemy
@@ -201,8 +202,9 @@ class SqlEventStore(EventStore):
         *,
         expected_version: ExpectedVersion,
         events: Iterable[CloudEvent],
-        timeout: Optional[timedelta] = None,  # TODO: handle timeout
+        timeout: Optional[timedelta] = None,
     ) -> Optional[CommitPosition]:
+        assert_timeout_not_supported(timeout)
         with self._session_factory() as session:
             stream_version, stream_id = _stream_metadata(stream_name, session)
             assert is_stream_version_correct(expected_version, lambda: stream_version)
@@ -226,6 +228,7 @@ class SqlEventStore(EventStore):
         backwards: bool = False,
         timeout: Optional[timedelta] = None,
     ) -> Iterable[RecordedEvent]:
+        assert_timeout_not_supported(timeout)
         with self._session_factory() as session:
             return _query_streams(session, instructions, backwards, self._event_type)
 
@@ -239,6 +242,7 @@ class SqlEventStore(EventStore):
     def current_version(
         self, stream_name: StreamName, *, timeout: Optional[timedelta] = None
     ) -> Optional[Union[StreamVersion, Literal[StreamState.NO_STREAM]]]:
+        assert_timeout_not_supported(timeout)
         with self._session_factory() as session:
             highest_stream_version, _ = _stream_metadata(stream_name, session)
             return highest_stream_version
