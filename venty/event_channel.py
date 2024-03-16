@@ -23,11 +23,15 @@ def publish_event(event: CloudEvent, channel: EventChannel) -> None:
     channel.publish((event,))
 
 
+def _ignore_error(_: Exception):
+    return None
+
+
 def best_effort_publish_events(
     events: Iterable[CloudEvent],
     channel: EventChannel,
     *,
-    on_error: Callable[[Exception], None] = lambda e: None
+    on_error: Callable[[Exception], None] = _ignore_error
 ) -> None:
     try:
         publish_events(events, channel)
@@ -39,9 +43,6 @@ def best_effort_publish_event(
     event: CloudEvent,
     channel: EventChannel,
     *,
-    on_error: Callable[[Exception], None] = lambda e: None
+    on_error: Callable[[Exception], None] = _ignore_error
 ):
-    try:
-        publish_event(event, channel)
-    except Exception as e:
-        on_error(e)
+    best_effort_publish_events((event,), channel, on_error=on_error)
