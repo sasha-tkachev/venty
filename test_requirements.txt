@@ -10,3 +10,4 @@ uvicorn
 pytest-asyncio
 httpx
 pydantic
+sqlalchemy
