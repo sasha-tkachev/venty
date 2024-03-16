@@ -215,16 +215,6 @@ def _commit_append_events(
     return _highest_commit_position(row_records)
 
 
-def _retry_until_no_integrity_error(
-    action: Callable[[], Optional[CommitPosition]]
-) -> Optional[CommitPosition]:
-    while True:
-        try:
-            return action()
-        except IntegrityError:
-            pass
-
-
 class SqlEventStore(EventStore):
 
     def __init__(
@@ -243,12 +233,14 @@ class SqlEventStore(EventStore):
     ) -> Optional[CommitPosition]:
         assert_timeout_not_supported(timeout)
         consumed_events = list(events)
-        with self._session_factory() as session:
-            return _retry_until_no_integrity_error(
-                lambda: _commit_append_events(
-                    stream_name, expected_version, consumed_events, session
-                )
-            )
+        while True:
+            with self._session_factory() as session:
+                try:
+                    return _commit_append_events(
+                        stream_name, expected_version, consumed_events, session
+                    )
+                except IntegrityError:
+                    session.rollback()
 
     def read_streams(
         self,
