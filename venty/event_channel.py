@@ -1,4 +1,4 @@
-from typing import Iterable
+from typing import Iterable, Callable
 
 from cloudevents.abstract import CloudEvent
 
@@ -21,3 +21,27 @@ def publish_events(events: Iterable[CloudEvent], channel: EventChannel) -> None:
 
 def publish_event(event: CloudEvent, channel: EventChannel) -> None:
     channel.publish((event,))
+
+
+def best_effort_publish_events(
+    events: Iterable[CloudEvent],
+    channel: EventChannel,
+    *,
+    on_error: Callable[[Exception], None] = lambda e: None
+) -> None:
+    try:
+        publish_events(events, channel)
+    except Exception as e:
+        on_error(e)
+
+
+def best_effort_publish_event(
+    event: CloudEvent,
+    channel: EventChannel,
+    *,
+    on_error: Callable[[Exception], None] = lambda e: None
+):
+    try:
+        publish_event(event, channel)
+    except Exception as e:
+        on_error(e)
