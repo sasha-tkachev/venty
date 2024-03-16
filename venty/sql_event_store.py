@@ -66,7 +66,9 @@ class StreamRow(Base):
 class RecordedEventRow(Base):
     __tablename__ = SQL_RECORDED_EVENTS_TABLE_NAME
     id: CommitPosition = Column(Integer, primary_key=True)
-    stream_id: int = Column(Integer, ForeignKey("venty_streams.id"))
+    stream_id: int = Column(
+        Integer, ForeignKey("{}.id".format(SQL_RECORDED_EVENTS_TABLE_NAME))
+    )
     stream_position: StreamVersion = Column(Integer, nullable=False)  # TODO: rename
     event: str = Column(Text, nullable=False)  # Added payload field here
 
