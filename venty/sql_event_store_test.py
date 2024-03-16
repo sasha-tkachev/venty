@@ -11,7 +11,7 @@ from venty.strong_types_test import dummy_events, MY_STREAM_NAME
 
 @pytest.fixture
 def session_factory():
-    engine = create_engine("sqlite:///:memory:", echo=True)
+    engine = create_engine("sqlite:///:memory:", echo=False)
     # Create all tables in the engine
     Base.metadata.create_all(engine)
 
