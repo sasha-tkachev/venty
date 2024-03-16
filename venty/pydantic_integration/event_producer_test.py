@@ -3,7 +3,7 @@ from datetime import datetime
 from cloudevents.sdk.event.attribute import SpecVersion
 from pydantic import BaseModel
 
-from venty.pydantic.event_producer import EventProducer
+from venty.pydantic_integration.event_producer import EventProducer
 from venty.strong_types import EventSource
 
 
