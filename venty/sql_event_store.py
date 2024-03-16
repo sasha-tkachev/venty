@@ -193,6 +193,38 @@ def _create_stream(stream_name: StreamName, session: Session) -> int:
     return stream.id
 
 
+def _commit_append_events(
+    stream_name: StreamName,
+    expected_version: ExpectedVersion,
+    events: Sequence[CloudEvent],
+    session: Session,
+) -> Optional[CommitPosition]:
+    stream_version, stream_id = _stream_metadata(stream_name, session)
+    if not is_stream_version_correct(expected_version, lambda: stream_version):
+        return None
+    if stream_id is None:
+        stream_id = _create_stream(stream_name, session)
+
+    row_records = _record_event_rows(
+        events=events,
+        last_stream_position=_last_stream_position(stream_version),
+        stream_id=stream_id,
+    )
+    session.add_all(row_records)
+    session.commit()
+    return _highest_commit_position(row_records)
+
+
+def _retry_until_no_integrity_error(
+    action: Callable[[], Optional[CommitPosition]]
+) -> Optional[CommitPosition]:
+    while True:
+        try:
+            return action()
+        except IntegrityError:
+            pass
+
+
 class SqlEventStore(EventStore):
 
     def __init__(
@@ -212,26 +244,11 @@ class SqlEventStore(EventStore):
         assert_timeout_not_supported(timeout)
         consumed_events = list(events)
         with self._session_factory() as session:
-            while True:
-                try:
-                    stream_version, stream_id = _stream_metadata(stream_name, session)
-                    if not is_stream_version_correct(
-                        expected_version, lambda: stream_version
-                    ):
-                        return None
-                    if stream_id is None:
-                        stream_id = _create_stream(stream_name, session)
-
-                    row_records = _record_event_rows(
-                        events=consumed_events,
-                        last_stream_position=_last_stream_position(stream_version),
-                        stream_id=stream_id,
-                    )
-                    session.add_all(row_records)
-                    session.commit()
-                    return _highest_commit_position(row_records)
-                except IntegrityError:
-                    pass
+            return _retry_until_no_integrity_error(
+                lambda: _commit_append_events(
+                    stream_name, expected_version, consumed_events, session
+                )
+            )
 
     def read_streams(
         self,
