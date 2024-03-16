@@ -205,7 +205,7 @@ class SqlEventStore(EventStore):
             result = session.query(func.max(RecordedEventRow.id)).scalar()
             if result is None:
                 result = NO_EVENT_VERSION
-            return CommitPosition(result)
+            return CommitPosition(result - 1)  # auto increment starts from 1
 
     def current_version(
         self, stream_name: StreamName, *, timeout: Optional[timedelta] = None
