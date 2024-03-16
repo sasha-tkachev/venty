@@ -7,3 +7,5 @@ from venty.event_store import (
     append_events,
     append_event,
 )
+
+from venty.in_memory_event_store import InMemoryEventStore
