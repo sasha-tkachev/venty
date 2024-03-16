@@ -14,5 +14,8 @@ Event Driven Tooling built around [CloudEvents](https://cloudevents.io/)
     * Queues 
     * Topics
     * HTTP 
+ * Log Formatter as CloudEvents (Planned)
+ * Event Producers (Planned)
+ * Correlation-ID and Causation-ID augmentation (Planned) 
  * Claim Check (Planned)
  
