@@ -153,6 +153,10 @@ def _query_streams(
     )
 
 
+def _highest_commit_position(row_records: Iterable[RecordedEventRow]) -> CommitPosition:
+    return CommitPosition(max([int(r.id) for r in row_records]))
+
+
 class SqlEventStore(EventStore):
 
     def __init__(
@@ -190,7 +194,7 @@ class SqlEventStore(EventStore):
             )
             session.add_all(row_records)
             session.commit()
-            return CommitPosition(max([int(r.id) for r in row_records]))
+            return _highest_commit_position(row_records)
 
     def read_streams(
         self,
