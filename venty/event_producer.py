@@ -16,6 +16,10 @@ def _ignore_invalid_attributes(attributes: Dict[str, Any]) -> Dict[str, Any]:
     }
 
 
+IdSelection = Callable[[], str]
+TimeSelection = Callable[[], datetime]
+
+
 class EventProducer:
     def __init__(
         self,
@@ -23,10 +27,8 @@ class EventProducer:
         *,
         cloudevent_cls: Type[CloudEvent],
         default_attributes: Optional[Dict[str, Any]] = None,
-        id_selection_algorithm: Callable[[], str] = default_id_selection_algorithm,
-        time_selection_algorithm: Callable[
-            [], datetime
-        ] = default_time_selection_algorithm,
+        id_selection_algorithm: IdSelection = default_id_selection_algorithm,
+        time_selection_algorithm: TimeSelection = default_time_selection_algorithm,
     ):
         self._source = source
         self._cloudevent_cls = cloudevent_cls
