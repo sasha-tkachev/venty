@@ -1,7 +1,9 @@
+from typing import Callable, Any
+
 import pytest
 from cloudevents.pydantic import CloudEvent
 from sqlalchemy import create_engine
-from sqlalchemy.orm import sessionmaker
+from sqlalchemy.orm import sessionmaker, Session
 
 from venty.event_store import append_events, StreamState, read_stream_no_metadata
 from venty.sql_event_store import Base, SqlEventStore
@@ -106,7 +108,19 @@ def test_append_events_should_create_correct_stream_versions_and_commit_offsets(
     )
 
 
-def test_append_event_must_return_none_expected_no_stream_but_stream_exist():  # noqa: E501
+def patch_commit(session: Session, on_commit: Callable[[], Any]):
+    original = session.commit
+
+    def _patched():
+        on_commit()
+        original()
+
+    session.commit = _patched
+
+
+def test_append_event_must_return_none_expected_no_stream_but_stream_exist(
+    session_factory,
+):  # noqa: E501
     pass
 
 
@@ -114,8 +128,45 @@ def test_append_event_must_return_none_expected_stream_exists_but_stream_does_no
     pass
 
 
-def test_append_event_must_able_to_commit_to_stream_even_if_during_operation_some_other_transaction_appended_events_given_expected_any():  # noqa: E501
-    pass
+def test_append_event_must_able_to_commit_to_stream_even_if_during_operation_some_other_transaction_appended_events_given_expected_any(  # noqa: E501
+    session_factory,
+):
+    my_session = session_factory()
+    your_session = session_factory()
+
+    events = list(dummy_events(10))
+    chunk_1 = events[:5]
+    chunk_2 = events[5:10]
+
+    my_store = SqlEventStore(lambda: my_session, CloudEvent)
+
+    your_store = SqlEventStore(lambda: your_session, CloudEvent)
+
+    patch_commit(
+        my_session,
+        lambda: append_events(
+            your_store,
+            MY_STREAM_NAME,
+            expected_version=StreamState.ANY,
+            events=chunk_1,
+        ),
+    )
+
+    append_events(
+        my_store,
+        MY_STREAM_NAME,
+        expected_version=StreamState.ANY,
+        events=chunk_2,
+    )
+
+    assert (
+        list(
+            read_stream_no_metadata(
+                my_store, MY_STREAM_NAME, stream_position=NO_EVENT_VERSION
+            )
+        )
+        == events
+    )
 
 
 def test_append_event_must_able_to_commit_to_stream_even_if_during_operation_some_other_transaction_appended_events_given_expected_stream_exists():  # noqa: E501
