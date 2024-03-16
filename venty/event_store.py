@@ -98,6 +98,9 @@ class EventStore:
         raise NotImplementedError()
 
     def commit_position(self) -> CommitPosition:
+        """
+        Initial commit position MAY be different from 0
+        """
         raise NotImplementedError()
 
     def current_version(

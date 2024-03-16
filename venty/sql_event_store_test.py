@@ -25,7 +25,7 @@ def test_integration(session_factory):
         append_events(
             store, MY_STREAM_NAME, expected_version=StreamState.NO_STREAM, events=events
         )
-        == 4
+        == 5
     )
     assert (
         list(
@@ -40,10 +40,10 @@ def test_integration(session_factory):
 def test_read_backwards(session_factory):
     store = SqlEventStore(session_factory, CloudEvent)
     events = list(dummy_events(5))
+    initial_commit_position = store.commit_position()
     append_events(
         store, MY_STREAM_NAME, expected_version=StreamState.ANY, events=events
     )
-
     assert list(
         read_stream_no_metadata(
             store, MY_STREAM_NAME, stream_position=None, backwards=True
@@ -56,12 +56,13 @@ def test_read_backwards(session_factory):
     ) == list(reversed(events))
 
     assert store.current_version(MY_STREAM_NAME) == 4
-    assert store.commit_position() == 4
+    assert store.commit_position() == 5
+    assert store.commit_position() > initial_commit_position
 
 
 def test_commit_position_of_empty_store(session_factory):
     store = SqlEventStore(session_factory, CloudEvent)
-    assert store.commit_position() == -1
+    assert store.commit_position() == 0
 
 
 def test_current_position_of_non_existing_stream(session_factory):

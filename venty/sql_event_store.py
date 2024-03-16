@@ -190,11 +190,7 @@ class SqlEventStore(EventStore):
             )
             session.add_all(row_records)
             session.commit()
-            return CommitPosition(
-                # decrease 1 because auto increment starts from 1
-                max([int(r.id) for r in row_records])
-                - 1,
-            )
+            return CommitPosition(max([int(r.id) for r in row_records]))
 
     def read_streams(
         self,
@@ -210,8 +206,8 @@ class SqlEventStore(EventStore):
         with self._session_factory() as session:
             result = session.query(func.max(RecordedEventRow.id)).scalar()
             if result is None:
-                return NO_EVENT_VERSION
-            return CommitPosition(result - 1)  # auto increment starts from 1
+                return CommitPosition(0)
+            return CommitPosition(result)
 
     def current_version(
         self, stream_name: StreamName, *, timeout: Optional[timedelta] = None
