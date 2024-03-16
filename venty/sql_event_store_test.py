@@ -1,4 +1,5 @@
 from typing import Callable, Any
+from uuid import UUID
 
 import pytest
 from cloudevents.pydantic import CloudEvent
@@ -140,23 +141,25 @@ def call_once(func):
     return wrapper
 
 
-def test_append_event_must_able_to_commit_to_stream_even_if_during_operation_some_other_transaction_appended_events_given_expected_any(  # noqa: E501
-    session_factory,
-):
+@pytest.fixture()
+def wining_events():
+    return list(dummy_events(10, seed=UUID(int=2)))
 
-    events = list(dummy_events(10))
-    chunk_1 = events[:5]
-    chunk_2 = events[5:10]
 
-    your_store = SqlEventStore(session_factory, CloudEvent)
+@pytest.fixture()
+def winning_store(session_factory):
+    return SqlEventStore(session_factory, CloudEvent)
 
+
+@pytest.fixture()
+def losing_store(winning_store, wining_events, session_factory):
     @call_once
     def _my_append():
         append_events(
-            your_store,
+            winning_store,
             MY_STREAM_NAME,
             expected_version=StreamState.ANY,
-            events=chunk_1,
+            events=wining_events,
         )
 
     def _patched_session_factory() -> Session:
@@ -167,10 +170,19 @@ def test_append_event_must_able_to_commit_to_stream_even_if_during_operation_som
         )
         return result
 
-    my_store = SqlEventStore(_patched_session_factory, CloudEvent)
+    return SqlEventStore(_patched_session_factory, CloudEvent)
+
+
+def test_append_event_must_able_to_commit_to_stream_even_if_during_operation_some_other_transaction_appended_events_given_expected_any(  # noqa: E501
+    wining_events,
+    winning_store,
+    losing_store,
+):
+
+    chunk_2 = list(dummy_events(10))
 
     append_events(
-        my_store,
+        losing_store,
         MY_STREAM_NAME,
         expected_version=StreamState.ANY,
         events=chunk_2,
@@ -179,10 +191,10 @@ def test_append_event_must_able_to_commit_to_stream_even_if_during_operation_som
     assert (
         list(
             read_stream_no_metadata(
-                my_store, MY_STREAM_NAME, stream_position=NO_EVENT_VERSION
+                losing_store, MY_STREAM_NAME, stream_position=NO_EVENT_VERSION
             )
         )
-        == events
+        == wining_events + chunk_2
     )
 
 
