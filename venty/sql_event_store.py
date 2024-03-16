@@ -1,3 +1,11 @@
+try:
+    import sqlalchemy
+except ImportError:  # pragma: no cover # hard to test
+    raise RuntimeError(
+        "Venty sql feature is not installed. "
+        "Install it using pip install venty[sql]"
+    )
+
 from datetime import timedelta
 from sqlalchemy import and_, or_, func
 from typing import (
