@@ -54,5 +54,6 @@ if __name__ == "__main__":
         extras_require={
             "sql": "sqlalchemy",
             "pydantic": "pydantic",
+            "http": "requests",
         },
     )
