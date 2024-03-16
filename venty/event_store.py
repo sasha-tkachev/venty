@@ -1,9 +1,14 @@
 from dataclasses import dataclass
 from datetime import timedelta
 from enum import Enum
-from typing import Iterable, Optional, Dict, Union, Literal
+from typing import Iterable, Optional, Dict, Union, Literal, Callable
 from cloudevents.abstract import CloudEvent
-from venty.strong_types import StreamVersion, StreamName, CommitPosition
+from venty.strong_types import (
+    StreamVersion,
+    StreamName,
+    CommitPosition,
+    NO_EVENT_VERSION,
+)
 import sys
 
 
@@ -28,6 +33,24 @@ class StreamState(Enum):
 
 
 ExpectedVersion = Union[StreamVersion, StreamState]
+
+
+def is_stream_version_correct(
+    expected_version: Union[StreamVersion, StreamState],
+    stream_version: Callable[[], Union[StreamVersion, Literal[StreamState.NO_STREAM]]],
+) -> bool:
+    if expected_version == StreamState.ANY:
+        #  we don't even need to query the stream version
+        return True
+    stream_version = stream_version()
+    if expected_version == StreamState.EXISTS:
+        # we expect any state as long as the stream exists
+        return stream_version != StreamState.NO_STREAM
+    if expected_version == StreamState.NO_STREAM:
+        return stream_version == StreamState.NO_STREAM
+    if expected_version == NO_EVENT_VERSION:
+        return stream_version in (StreamState.NO_STREAM, NO_EVENT_VERSION)
+    return stream_version == expected_version
 
 
 class EventStore:

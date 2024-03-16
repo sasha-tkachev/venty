@@ -4,7 +4,13 @@ from typing import Iterable, Optional, Dict, List, Sequence, Union, Literal
 
 from cloudevents.abstract import CloudEvent
 
-from venty.event_store import EventStore, RecordedEvent, ReadInstruction, StreamState
+from venty.event_store import (
+    EventStore,
+    RecordedEvent,
+    ReadInstruction,
+    StreamState,
+    is_stream_version_correct,
+)
 from venty.timing import iterate_with_timeout
 from venty.strong_types import (
     CommitPosition,
@@ -39,18 +45,9 @@ def _expected_version_correct(
     stream_name: StreamName,
     streams: _Streams,
 ) -> bool:
-    if expected_version == StreamState.ANY:
-        # anything goes
-        return True
-    stream_version = _stream_version(stream_name, streams)
-    if expected_version == StreamState.EXISTS:
-        # we expect any state as long as the stream exists
-        return stream_version != StreamState.NO_STREAM
-    if expected_version == StreamState.NO_STREAM:
-        return stream_version == StreamState.NO_STREAM
-    if expected_version == NO_EVENT_VERSION:
-        return stream_version in (StreamState.NO_STREAM, NO_EVENT_VERSION)
-    return stream_version == expected_version
+    return is_stream_version_correct(
+        expected_version, lambda: _stream_version(stream_name, streams)
+    )
 
 
 def _recorded_events(
