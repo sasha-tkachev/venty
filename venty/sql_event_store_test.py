@@ -128,29 +128,46 @@ def test_append_event_must_return_none_expected_stream_exists_but_stream_does_no
     pass
 
 
+def call_once(func):
+    called = False
+
+    def wrapper(*args, **kwargs):
+        nonlocal called
+        if not called:
+            called = True
+            return func(*args, **kwargs)
+
+    return wrapper
+
+
 def test_append_event_must_able_to_commit_to_stream_even_if_during_operation_some_other_transaction_appended_events_given_expected_any(  # noqa: E501
     session_factory,
 ):
-    my_session = session_factory()
-    your_session = session_factory()
 
     events = list(dummy_events(10))
     chunk_1 = events[:5]
     chunk_2 = events[5:10]
 
-    my_store = SqlEventStore(lambda: my_session, CloudEvent)
+    your_store = SqlEventStore(session_factory, CloudEvent)
 
-    your_store = SqlEventStore(lambda: your_session, CloudEvent)
-
-    patch_commit(
-        my_session,
-        lambda: append_events(
+    @call_once
+    def _my_append():
+        append_events(
             your_store,
             MY_STREAM_NAME,
             expected_version=StreamState.ANY,
             events=chunk_1,
-        ),
-    )
+        )
+
+    def _patched_session_factory() -> Session:
+        result = session_factory()
+        patch_commit(
+            result,
+            _my_append,
+        )
+        return result
+
+    my_store = SqlEventStore(_patched_session_factory, CloudEvent)
 
     append_events(
         my_store,
