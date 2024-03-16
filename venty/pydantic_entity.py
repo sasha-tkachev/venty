@@ -1,7 +1,15 @@
 from typing import List
 
 from cloudevents.abstract import CloudEvent
-from pydantic import BaseModel, PrivateAttr
+
+try:
+    from pydantic import BaseModel, PrivateAttr
+except ImportError:  # pragma: no cover # hard to test
+    raise RuntimeError(
+        "Venty pydantic feature is not installed. "
+        "Install it using pip install venty[pydantic]"
+    )
+
 
 from venty.entity import Entity as _Entity, EntityId
 from venty.strong_types import StreamVersion, NO_EVENT_VERSION
