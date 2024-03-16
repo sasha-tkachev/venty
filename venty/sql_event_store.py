@@ -55,16 +55,16 @@ Base = declarative_base()
 
 class StreamRow(Base):
     __tablename__ = SQL_STREAMS_TABLE_NAME
-    id = Column(Integer, primary_key=True)
-    stream_name = Column(String, nullable=False, unique=True)
+    id: int = Column(Integer, primary_key=True)
+    stream_name: StreamName = Column(String, nullable=False, unique=True)
 
 
 class RecordedEventRow(Base):
     __tablename__ = SQL_RECORDED_EVENTS_TABLE_NAME
-    id = Column(Integer, primary_key=True)
-    stream_id = Column(Integer, ForeignKey("venty_streams.id"))
-    stream_position = Column(Integer, nullable=False)  # TODO: rename stream_position
-    event = Column(Text, nullable=False)  # Added payload field here
+    id: CommitPosition = Column(Integer, primary_key=True)
+    stream_id: int = Column(Integer, ForeignKey("venty_streams.id"))
+    stream_position: StreamVersion = Column(Integer, nullable=False)  # TODO: rename
+    event: str = Column(Text, nullable=False)  # Added payload field here
 
     __table_args__ = (
         UniqueConstraint(
@@ -123,17 +123,17 @@ def _row_to_recorded_event(
 ) -> RecordedEvent:
     return RecordedEvent(
         commit_position=CommitPosition(
-            event_row.id,  # type: ignore
+            event_row.id,
         ),
         stream_position=StreamVersion(
-            event_row.stream_position,  # type: ignore
+            event_row.stream_position,
         ),
         stream_name=StreamName(
-            stream_row.stream_name,  # type: ignore
+            stream_row.stream_name,
         ),
         event=from_json(
             event_type,
-            event_row.event,  # type: ignore
+            event_row.event,
         ),
     )
 
@@ -172,6 +172,21 @@ def _highest_commit_position(row_records: Iterable[RecordedEventRow]) -> CommitP
     return CommitPosition(max([int(r.id) for r in row_records]))
 
 
+def _last_stream_position(
+    stream_position: Union[StreamVersion, Literal[StreamState.NO_STREAM]]
+) -> StreamVersion:
+    if stream_position == StreamState.NO_STREAM:
+        return NO_EVENT_VERSION
+    return stream_position  # type: ignore
+
+
+def _create_stream(stream_name: StreamName, session: Session) -> int:
+    stream = StreamRow(stream_name=stream_name)
+    session.add(stream)
+    session.commit()
+    return stream.id
+
+
 class SqlEventStore(EventStore):
 
     def __init__(
@@ -192,19 +207,12 @@ class SqlEventStore(EventStore):
             stream_version, stream_id = _stream_metadata(stream_name, session)
             assert is_stream_version_correct(expected_version, lambda: stream_version)
             if stream_id is None:
-                stream = StreamRow(stream_name=stream_name)
-                session.add(stream)
-                session.commit()
-                stream_id = stream.id
+                stream_id = _create_stream(stream_name, session)
 
             consumed_events = list(events)
             row_records = _record_event_rows(
                 events=consumed_events,
-                last_stream_position=(
-                    stream_version
-                    if stream_version != StreamState.NO_STREAM
-                    else NO_EVENT_VERSION
-                ),
+                last_stream_position=_last_stream_position(stream_version),
                 stream_id=stream_id,
             )
             session.add_all(row_records)
