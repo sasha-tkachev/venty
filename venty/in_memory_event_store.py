@@ -125,7 +125,6 @@ class InMemoryEventStore(EventStore):
         instructions: Dict[StreamName, ReadInstruction],
         *,
         backwards: bool = False,
-        limit: int = sys.maxsize,
         timeout: Optional[timedelta] = None,
     ) -> Iterable[RecordedEvent]:
         for stream_name, instruction in instructions.items():

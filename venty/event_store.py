@@ -1,7 +1,7 @@
 from dataclasses import dataclass
 from datetime import timedelta
 from enum import Enum
-from typing import Iterable, Optional, Dict, Union, Literal, Callable
+from typing import Iterable, Optional, Dict, Union, Literal, Callable, Sequence
 from cloudevents.abstract import CloudEvent
 from venty.strong_types import (
     StreamVersion,
@@ -16,6 +16,12 @@ import sys
 class ReadInstruction:
     stream_position: Optional[StreamVersion]
     limit: int = sys.maxsize
+
+    @property
+    def stream_position_or_default(self) -> StreamVersion:
+        if self.stream_position is None:
+            return NO_EVENT_VERSION
+        return self.stream_position
 
 
 @dataclass(frozen=True)
@@ -87,7 +93,6 @@ class EventStore:
         instructions: Dict[StreamName, ReadInstruction],
         *,
         backwards: bool = False,
-        limit: int = sys.maxsize,
         timeout: Optional[timedelta] = None,
     ) -> Iterable[RecordedEvent]:
         raise NotImplementedError()
