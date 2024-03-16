@@ -19,3 +19,6 @@ Event Driven Tooling built around [CloudEvents](https://cloudevents.io/)
  * Correlation-ID and Causation-ID augmentation (Planned) 
  * Claim Check (Planned)
  
+ 
+ ## Configuration
+ You can configure the venty package via [the package settings](venty/settings.md)
