@@ -30,7 +30,7 @@ from sqlalchemy import (
     Text,
     UniqueConstraint,
 )
-from sqlalchemy.ext.declarative import declarative_base
+from sqlalchemy.orm import declarative_base
 from sqlalchemy.orm import Session, aliased
 
 from venty import EventStore
@@ -230,12 +230,5 @@ class SqlEventStore(EventStore):
         self, stream_name: StreamName, *, timeout: Optional[timedelta] = None
     ) -> Optional[Union[StreamVersion, Literal[StreamState.NO_STREAM]]]:
         with self._session_factory() as session:
-            highest_stream_version = (
-                session.query(func.max(RecordedEventRow.stream_position))
-                .join(StreamRow, RecordedEventRow.stream_id == StreamRow.id)
-                .filter(StreamRow.stream_name == stream_name)
-                .scalar()
-            )
-            if highest_stream_version is None:
-                return StreamState.NO_STREAM
-            return StreamVersion(highest_stream_version)
+            highest_stream_version, _ = _stream_metadata(stream_name, session)
+            return highest_stream_version
