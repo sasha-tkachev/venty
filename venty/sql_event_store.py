@@ -1,3 +1,6 @@
+from time import time
+from sqlalchemy.exc import IntegrityError
+
 from venty.settings import SQL_STREAMS_TABLE_NAME, SQL_RECORDED_EVENTS_TABLE_NAME
 from venty.timing import assert_timeout_not_supported
 
@@ -182,9 +185,11 @@ def _last_stream_position(
 
 
 def _create_stream(stream_name: StreamName, session: Session) -> int:
-    stream = StreamRow(stream_name=stream_name)
+    stream = StreamRow(
+        id=int(time() * 1000),  # it is ok if we have a race, we will just re-try
+        stream_name=stream_name,
+    )
     session.add(stream)
-    session.commit()
     return stream.id
 
 
@@ -205,21 +210,28 @@ class SqlEventStore(EventStore):
         timeout: Optional[timedelta] = None,
     ) -> Optional[CommitPosition]:
         assert_timeout_not_supported(timeout)
+        consumed_events = list(events)
         with self._session_factory() as session:
-            stream_version, stream_id = _stream_metadata(stream_name, session)
-            assert is_stream_version_correct(expected_version, lambda: stream_version)
-            if stream_id is None:
-                stream_id = _create_stream(stream_name, session)
+            while True:
+                try:
+                    stream_version, stream_id = _stream_metadata(stream_name, session)
+                    if not is_stream_version_correct(
+                        expected_version, lambda: stream_version
+                    ):
+                        return None
+                    if stream_id is None:
+                        stream_id = _create_stream(stream_name, session)
 
-            consumed_events = list(events)
-            row_records = _record_event_rows(
-                events=consumed_events,
-                last_stream_position=_last_stream_position(stream_version),
-                stream_id=stream_id,
-            )
-            session.add_all(row_records)
-            session.commit()
-            return _highest_commit_position(row_records)
+                    row_records = _record_event_rows(
+                        events=consumed_events,
+                        last_stream_position=_last_stream_position(stream_version),
+                        stream_id=stream_id,
+                    )
+                    session.add_all(row_records)
+                    session.commit()
+                    return _highest_commit_position(row_records)
+                except IntegrityError:
+                    pass
 
     def read_streams(
         self,
