@@ -1,3 +1,5 @@
+from venty.settings import SQL_STREAMS_TABLE_NAME, SQL_RECORDED_EVENTS_TABLE_NAME
+
 try:
     import sqlalchemy
 except ImportError:  # pragma: no cover # hard to test
@@ -52,13 +54,13 @@ Base = declarative_base()
 
 
 class StreamRow(Base):
-    __tablename__ = "venty_streams"
+    __tablename__ = SQL_STREAMS_TABLE_NAME
     id = Column(Integer, primary_key=True)
     stream_name = Column(String, nullable=False, unique=True)
 
 
 class RecordedEventRow(Base):
-    __tablename__ = "venty_recorded_events"
+    __tablename__ = SQL_RECORDED_EVENTS_TABLE_NAME
     id = Column(Integer, primary_key=True)
     stream_id = Column(Integer, ForeignKey("venty_streams.id"))
     stream_position = Column(Integer, nullable=False)  # TODO: rename stream_position
