@@ -6,6 +6,7 @@ from cloudevents.pydantic import CloudEvent
 from sqlalchemy import create_engine
 from sqlalchemy.orm import sessionmaker, Session
 
+from venty import attempt_append_events
 from venty.event_store import append_events, StreamState, read_stream_no_metadata
 from venty.sql_event_store import Base, SqlEventStore
 from venty.strong_types import NO_EVENT_VERSION, StreamVersion
@@ -198,9 +199,48 @@ def test_append_event_must_able_to_commit_to_stream_even_if_during_operation_som
     )
 
 
-def test_append_event_must_able_to_commit_to_stream_even_if_during_operation_some_other_transaction_appended_events_given_expected_stream_exists():  # noqa: E501
-    pass
+def test_append_event_must_able_to_commit_to_stream_even_if_during_operation_some_other_transaction_appended_events_given_expected_stream_exists(  # noqa: E501
+    wining_events,
+    winning_store,
+    losing_store,
+):
+    chunk_1 = list(dummy_events(1, seed=UUID(int=3)))
+    chunk_2 = list(dummy_events(10))
+    append_events(
+        winning_store,
+        MY_STREAM_NAME,
+        expected_version=StreamState.ANY,
+        events=chunk_1,
+    )
+    append_events(
+        losing_store,
+        MY_STREAM_NAME,
+        expected_version=StreamState.EXISTS,
+        events=chunk_2,
+    )
+
+    assert (
+        list(
+            read_stream_no_metadata(
+                losing_store, MY_STREAM_NAME, stream_position=NO_EVENT_VERSION
+            )
+        )
+        == chunk_1 + wining_events + chunk_2
+    )
 
 
-def test_append_event_must_return_none_even_if_during_operation_some_other_transaction_appended_events_given_expected_stream_not_exists():  # noqa: E501
-    pass
+def test_append_event_must_return_none_even_if_during_operation_some_other_transaction_appended_events_given_expected_stream_not_exists(  # noqa: E501
+    wining_events,
+    winning_store,
+    losing_store,
+):
+    chunk_2 = list(dummy_events(10))
+    assert (
+        attempt_append_events(
+            losing_store,
+            MY_STREAM_NAME,
+            expected_version=StreamState.NO_STREAM,
+            events=chunk_2,
+        )
+        is None
+    )
