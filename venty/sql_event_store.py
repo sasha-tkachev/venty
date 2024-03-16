@@ -1,4 +1,3 @@
-import sys
 from datetime import timedelta
 from sqlalchemy import and_, or_, func
 from typing import (
@@ -10,7 +9,6 @@ from typing import (
     Sequence,
     Tuple,
     Dict,
-    Any,
     Type,
 )
 
@@ -55,12 +53,12 @@ class RecordedEventRow(Base):
     __tablename__ = "venty_recorded_events"
     id = Column(Integer, primary_key=True)
     stream_id = Column(Integer, ForeignKey("venty_streams.id"))
-    stream_version = Column(Integer, nullable=False)  # TODO: rename stream_position
+    stream_position = Column(Integer, nullable=False)  # TODO: rename stream_position
     event = Column(Text, nullable=False)  # Added payload field here
 
     __table_args__ = (
         UniqueConstraint(
-            "stream_id", "stream_version", name="_stream_id_stream_version_uc"
+            "stream_id", "stream_position", name="_stream_id_stream_position_uc"
         ),
     )
 
@@ -74,12 +72,12 @@ def _stream_metadata(
     )
     if stream is None:
         return StreamState.NO_STREAM, None
-    highest_stream_version = (
-        session.query(func.max(RecordedEventRow.stream_version))
+    highest_stream_position = (
+        session.query(func.max(RecordedEventRow.stream_position))
         .filter(RecordedEventRow.stream_id == stream.id)
         .scalar()
     )
-    return StreamVersion(highest_stream_version), stream.id
+    return StreamVersion(highest_stream_position), stream.id
 
 
 def _record_event_rows(
@@ -90,7 +88,7 @@ def _record_event_rows(
     return [
         RecordedEventRow(
             stream_id=stream_id,
-            stream_version=last_stream_position + 1 + i,
+            stream_position=last_stream_position + 1 + i,
             event=to_json(event),
         )
         for i, event in enumerate(events)
@@ -105,7 +103,7 @@ def _row_to_recorded_event(
             event_row.id,  # type: ignore
         ),
         stream_position=StreamVersion(
-            event_row.stream_version,  # type: ignore
+            event_row.stream_position,  # type: ignore
         ),
         stream_name=StreamName(
             stream_row.stream_name,  # type: ignore
@@ -126,8 +124,8 @@ def _query_streams(
     or_conditions = [
         and_(
             StreamRow.stream_name == stream_name,
-            RecordedEventRow.stream_version >= instruction.stream_position_or_default,
-            RecordedEventRow.stream_version
+            RecordedEventRow.stream_position >= instruction.stream_position_or_default,
+            RecordedEventRow.stream_position
             <= instruction.stream_position_or_default + instruction.limit,
         )
         for stream_name, instruction in instructions.items()
@@ -140,9 +138,9 @@ def _query_streams(
         .join(StreamRow, StreamRow.id == RecordedEventRow.stream_id)
         .filter(or_(*or_conditions))
         .order_by(
-            RecordedEventRow.stream_version.desc()
+            RecordedEventRow.stream_position.desc()
             if backwards
-            else RecordedEventRow.stream_version.asc()
+            else RecordedEventRow.stream_position.asc()
         )
     )
 
@@ -212,7 +210,7 @@ class SqlEventStore(EventStore):
     ) -> Optional[Union[StreamVersion, Literal[StreamState.NO_STREAM]]]:
         with self._session_factory() as session:
             highest_stream_version = (
-                session.query(func.max(RecordedEventRow.stream_version))
+                session.query(func.max(RecordedEventRow.stream_position))
                 .join(StreamRow, RecordedEventRow.stream_id == StreamRow.id)
                 .filter(StreamRow.stream_name == stream_name)
                 .scalar()
