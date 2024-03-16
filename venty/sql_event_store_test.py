@@ -86,3 +86,20 @@ def test_append_events_should_create_correct_stream_versions_and_commit_offsets(
     append_events(
         store, MY_STREAM_NAME, expected_version=StreamVersion(4), events=chunk_3
     )
+    assert (
+        list(
+            read_stream_no_metadata(
+                store, MY_STREAM_NAME, stream_position=NO_EVENT_VERSION
+            )
+        )
+        == chunk_1 + chunk_3
+    )
+
+    assert (
+        list(
+            read_stream_no_metadata(
+                store, YOUR_STREAM_NAME, stream_position=NO_EVENT_VERSION
+            )
+        )
+        == chunk_2
+    )
