@@ -1,4 +1,3 @@
-import sys
 from datetime import timedelta
 from typing import Iterable, Optional, Dict, List, Sequence, Union, Literal
 
