@@ -104,3 +104,23 @@ def test_append_events_should_create_correct_stream_versions_and_commit_offsets(
         )
         == chunk_2
     )
+
+
+def test_append_event_must_return_none_expected_no_stream_but_stream_exist():  # noqa: E501
+    pass
+
+
+def test_append_event_must_return_none_expected_stream_exists_but_stream_does_not_exist():  # noqa: E501
+    pass
+
+
+def test_append_event_must_able_to_commit_to_stream_even_if_during_operation_some_other_transaction_appended_events_given_expected_any():  # noqa: E501
+    pass
+
+
+def test_append_event_must_able_to_commit_to_stream_even_if_during_operation_some_other_transaction_appended_events_given_expected_stream_exists():  # noqa: E501
+    pass
+
+
+def test_append_event_must_return_none_even_if_during_operation_some_other_transaction_appended_events_given_expected_stream_not_exists():  # noqa: E501
+    pass
