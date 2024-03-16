@@ -68,18 +68,18 @@ class RecordedEventRow(Base):
 def _stream_metadata(
     stream_name: StreamName, session: Session
 ) -> Tuple[Union[StreamVersion, Literal[StreamState.NO_STREAM]], Optional[int]]:
+    # TODO:
     stream = (
         session.query(StreamRow).filter(StreamRow.stream_name == stream_name).first()
     )
     if stream is None:
         return StreamState.NO_STREAM, None
-    query = (
-        session.query(RecordedEventRow)
-        .join(StreamRow, StreamRow.id == RecordedEventRow.stream_id)
-        .filter(StreamRow.stream_name == stream_name)
-        .first()
+    highest_stream_version = (
+        session.query(func.max(RecordedEventRow.stream_version))
+        .filter(RecordedEventRow.stream_id == stream.id)
+        .scalar()
     )
-    return query, stream.id
+    return StreamVersion(highest_stream_version), stream.id
 
 
 def _record_event_rows(
