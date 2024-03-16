@@ -3,6 +3,7 @@ Event Driven Tooling built around [CloudEvents](https://cloudevents.io/)
  
  
  ## Features
+  * [Event Producer](venty/event_producer.py) for easy cloudevent creation.
   * [Event Channel Interface](venty/event_channel.py)
     * [HTTP](venty/http_event_channel.py)
     * [In Memory](venty/in_memory_event_channel.py) 
@@ -15,9 +16,7 @@ Event Driven Tooling built around [CloudEvents](https://cloudevents.io/)
  * [Aggregate Store Implementation](venty/aggregate_store.py)
     * Based on the event store interface.
  * [Strong Types](venty/strong_types.py) for event driven development.
-
  * Log Formatter as CloudEvents (Planned)
- * Event Producers (Planned)
  * Correlation-ID and Causation-ID augmentation (Planned) 
  * Claim Check (Planned)
  
