@@ -17,7 +17,7 @@ long_description = (here / "README.md").read_text(encoding="utf-8")
 if __name__ == "__main__":
     setuptools.setup(
         name="venty",
-        version="2.0.0",
+        version="3.0.0",
         author="Alexander Tkachev",
         author_email="sasha64sasha@gmail.com",
         description="Venty",
