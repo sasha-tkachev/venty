@@ -19,6 +19,9 @@ class AggregateRoot:
     _aggregate_version: StreamVersion = NO_EVENT_VERSION
     _uncommitted_changes: List[CloudEvent] = field(default_factory=list)
 
+    def __init__(self):
+        super().__init__()
+
     @property
     def aggregate_version(self) -> StreamVersion:
         """
