@@ -206,6 +206,7 @@ def _commit_append_events(
         return None
     if stream_id is None:
         stream_id = _create_stream(stream_name, session)
+        session.commit()
 
     row_records = _record_event_rows(
         events=events,
@@ -241,7 +242,7 @@ class SqlEventStore(EventStore):
                     return _commit_append_events(
                         stream_name, expected_version, consumed_events, session
                     )
-                except IntegrityError:
+                except IntegrityError as e:
                     session.rollback()
 
     def read_streams(
