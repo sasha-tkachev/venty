@@ -16,22 +16,22 @@ class AggregateRoot:
     Based on https://github.com/gregoryyoung/m-r/blob/master/SimpleCQRS/Domain.cs#L89
     """
 
-    __version: StreamVersion = NO_EVENT_VERSION
-    __uncommitted_changes: List[CloudEvent] = field(default_factory=list)
+    _aggregate_version: StreamVersion = NO_EVENT_VERSION
+    _uncommitted_changes: List[CloudEvent] = field(default_factory=list)
 
     @property
     def aggregate_version(self) -> StreamVersion:
         """
         not called "version" to avoid name collision with subclasses
         """
-        return self.__version
+        return self._aggregate_version
 
     @property
     def uncommitted_changes(self) -> List[CloudEvent]:
-        return self.__uncommitted_changes
+        return self._uncommitted_changes
 
     def mark_changes_as_committed(self) -> None:
-        self.__uncommitted_changes.clear()
+        self._uncommitted_changes.clear()
 
     @property
     def aggregate_uuid(self) -> AggregateUUID:
@@ -50,7 +50,7 @@ class AggregateRoot:
     def load_from_history(self, events: Iterable[CloudEvent]) -> None:
         for event in events:
             self.when(event)
-            self.__version = StreamVersion(self.aggregate_version + 1)
+            self._aggregate_version = StreamVersion(self.aggregate_version + 1)
 
 
 AggregateRootT = TypeVar("AggregateRootT", bound=AggregateRoot)
