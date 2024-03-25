@@ -60,7 +60,7 @@ Base = declarative_base()
 class StreamRow(Base):
     __tablename__ = SQL_STREAMS_TABLE_NAME
     id: int = Column(Integer, primary_key=True)
-    stream_name: StreamName = Column(String, nullable=False, unique=True)
+    stream_name: StreamName = Column(String(255), nullable=False, unique=True)
 
 
 class RecordedEventRow(Base):
