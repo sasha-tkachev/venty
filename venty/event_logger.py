@@ -128,7 +128,7 @@ def _event_attributes(record: LogRecord, data: Dict[str, Any]) -> Dict[str, Any]
 
 
 class VentyFormatter(Formatter):
-    def __init__(self, producer: EventProducer, *args, **kwargs):
+    def __init__(self, *args, producer: EventProducer, **kwargs):
         super().__init__(*args, **kwargs)
         self._data_formatter = JsonFormatter(*args, **kwargs)
         self._producer = producer
