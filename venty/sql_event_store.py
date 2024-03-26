@@ -204,6 +204,7 @@ def _commit_append_events(
         return None
     if stream_id is None:
         stream_id = _create_stream(stream_name, session)
+        session.commit()
 
     row_records = _record_event_rows(
         events=events,

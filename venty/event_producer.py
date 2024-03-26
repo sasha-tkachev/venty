@@ -1,7 +1,7 @@
 from datetime import datetime
-from typing import Any, Dict, Optional, Type, Callable
+from typing import Any, Dict, Optional, Callable
 
-from cloudevents.abstract import CloudEvent
+from cloudevents.pydantic import CloudEvent
 from cloudevents.sdk.event.attribute import (
     default_id_selection_algorithm,
     default_time_selection_algorithm,
@@ -25,13 +25,11 @@ class EventProducer:
         self,
         source: EventSource,
         *,
-        cloudevent_cls: Type[CloudEvent],
         default_attributes: Optional[Dict[str, Any]] = None,
         id_selection_algorithm: IdSelection = default_id_selection_algorithm,
         time_selection_algorithm: TimeSelection = default_time_selection_algorithm,
     ):
         self._source = source
-        self._cloudevent_cls = cloudevent_cls
         if default_attributes is None:
             default_attributes = {}
         self._default_attributes = _ignore_invalid_attributes(default_attributes)
@@ -46,4 +44,4 @@ class EventProducer:
         actual_attributes["source"] = self._source
         actual_attributes["id"] = self._id_selection_algorithm()
         actual_attributes["time"] = self._time_selection_algorithm()
-        return self._cloudevent_cls.create(actual_attributes, data)
+        return CloudEvent.create(actual_attributes, data)
