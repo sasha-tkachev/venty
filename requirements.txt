@@ -1,2 +1,3 @@
 cloudevents
 more_itertools
+python-json-logger
