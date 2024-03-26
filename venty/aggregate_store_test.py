@@ -1,3 +1,4 @@
+from dataclasses import dataclass
 from typing import Optional
 from uuid import UUID, uuid5
 
@@ -18,7 +19,6 @@ class Book(AggregateRoot):
     name: Optional[str]
     checked_out_by: Optional[str]
 
-    @property
     def aggregate_uuid(self) -> AggregateUUID:
         assert self.name is not None
         return _book_uuid(self.name)

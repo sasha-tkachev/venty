@@ -17,7 +17,7 @@ class AggregateStore:
     def store(self, aggregate: AggregateRoot):
         append_events(
             self._event_store,
-            _aggregate_stream(aggregate.aggregate_uuid),
+            _aggregate_stream(aggregate.aggregate_uuid()),
             expected_version=aggregate.aggregate_version,
             events=aggregate.uncommitted_changes,
         )
@@ -40,7 +40,7 @@ class AggregateStore:
         aggregate.load_from_history(
             read_stream_no_metadata(
                 self._event_store,
-                _aggregate_stream(aggregate.aggregate_uuid),
+                _aggregate_stream(aggregate.aggregate_uuid()),
                 stream_position=aggregate.aggregate_version,
             )
         )

@@ -19,9 +19,6 @@ class AggregateRoot:
     _aggregate_version: StreamVersion = NO_EVENT_VERSION
     _uncommitted_changes: List[CloudEvent] = field(default_factory=list)
 
-    def __init__(self):
-        super().__init__()
-
     @property
     def aggregate_version(self) -> StreamVersion:
         """
@@ -36,7 +33,6 @@ class AggregateRoot:
     def mark_changes_as_committed(self) -> None:
         self._uncommitted_changes.clear()
 
-    @property
     def aggregate_uuid(self) -> AggregateUUID:
         """
         If you have a string aggregate id, you can convert it to uuid using uuidv5

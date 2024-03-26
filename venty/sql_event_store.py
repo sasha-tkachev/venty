@@ -239,7 +239,7 @@ class SqlEventStore(EventStore):
                     return _commit_append_events(
                         stream_name, expected_version, consumed_events, session
                     )
-                except IntegrityError:
+                except IntegrityError as e:
                     session.rollback()
 
     def read_streams(
