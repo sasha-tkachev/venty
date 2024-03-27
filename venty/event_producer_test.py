@@ -9,7 +9,7 @@ from venty.strong_types import EventSource
 
 def test_event_producer_sanity():
     producer = SimpleEventProducer(
-        EventSource("my-source"),
+        source=EventSource("my-source"),
         id_selection_algorithm=lambda: "1",
         time_selection_algorithm=lambda: datetime(year=2024, month=1, day=1),
         default_attributes={"subject": "hello"},

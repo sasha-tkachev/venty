@@ -1,5 +1,6 @@
 from datetime import datetime
-from typing import Any, Dict, Optional, Callable
+from typing import Any, Dict, Optional, Callable, TypeVar
+from uuid import uuid4
 
 from cloudevents.pydantic import CloudEvent
 from cloudevents.sdk.event.attribute import (
@@ -27,15 +28,20 @@ class EventProducer:
         raise NotImplementedError()
 
 
+EventProducerT = TypeVar("EventProducerT", bound=EventProducer)
+
+
 class SimpleEventProducer(EventProducer):
     def __init__(
         self,
-        source: EventSource,
         *,
+        source: Optional[EventSource] = None,
         default_attributes: Optional[Dict[str, Any]] = None,
         id_selection_algorithm: IdSelection = default_id_selection_algorithm,
         time_selection_algorithm: TimeSelection = default_time_selection_algorithm,
     ):
+        if source is None:
+            source = EventSource(str(uuid4()))
         self._source = source
         if default_attributes is None:
             default_attributes = {}

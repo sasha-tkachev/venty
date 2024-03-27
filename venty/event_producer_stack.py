@@ -1,10 +1,11 @@
-from typing import Dict, Any, Optional
+from typing import Dict, Any, Optional, ContextManager
 
 from cloudevents.pydantic import CloudEvent
 
-from venty.event_producer import EventProducer
+from venty.event_producer import EventProducer, EventProducerT
 from collections import OrderedDict
 from uuid import uuid4, UUID
+from contextlib import contextmanager
 
 
 EventProducers = OrderedDict[UUID, Optional[EventProducer]]
@@ -27,7 +28,10 @@ class EventProducerStack(EventProducer):
     ) -> CloudEvent:
         return _last(self._event_producers).produce_event(attributes, data)
 
-    def scoped_event_producer(self, event_producer: EventProducer) -> None:
+    @contextmanager
+    def scoped_event_producer(
+        self, event_producer: EventProducerT
+    ) -> ContextManager[EventProducerT]:
         scoped_uuid = uuid4()
         self._event_producers[scoped_uuid] = event_producer
         try:
