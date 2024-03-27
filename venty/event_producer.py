@@ -21,6 +21,13 @@ TimeSelection = Callable[[], datetime]
 
 
 class EventProducer:
+    def produce_event(
+        self, attributes: Dict[str, Any], data: Optional[Any]
+    ) -> CloudEvent:
+        raise NotImplementedError()
+
+
+class SimpleEventProducer(EventProducer):
     def __init__(
         self,
         source: EventSource,

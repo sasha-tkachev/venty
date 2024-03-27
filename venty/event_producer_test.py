@@ -1,17 +1,15 @@
 from datetime import datetime
 
 from cloudevents.conversion import to_dict
-from cloudevents.pydantic import CloudEvent
 
 
-from venty.event_producer import EventProducer
+from venty.event_producer import SimpleEventProducer
 from venty.strong_types import EventSource
 
 
 def test_event_producer_sanity():
-    producer = EventProducer(
+    producer = SimpleEventProducer(
         EventSource("my-source"),
-        cloudevent_cls=CloudEvent,
         id_selection_algorithm=lambda: "1",
         time_selection_algorithm=lambda: datetime(year=2024, month=1, day=1),
         default_attributes={"subject": "hello"},

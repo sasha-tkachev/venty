@@ -16,8 +16,8 @@ def _book_uuid(name: str) -> AggregateUUID:
 
 
 class Book(AggregateRoot):
-    name: Optional[str]
-    checked_out_by: Optional[str]
+    name: Optional[str] = None
+    checked_out_by: Optional[str] = None
 
     def aggregate_uuid(self) -> AggregateUUID:
         assert self.name is not None
@@ -63,6 +63,6 @@ def test_store_integration():
     loaded_book.check_out("Alice")
     library.store(loaded_book)
 
-    original_book = library.fetch(original_book)
+    second_load = library.load(Book, _book_uuid(the_idiot))
 
-    assert original_book.checked_out_by == "Alice"
+    assert second_load.checked_out_by == "Alice"

@@ -128,10 +128,10 @@ def _event_attributes(record: LogRecord, data: Dict[str, Any]) -> Dict[str, Any]
 
 
 class VentyFormatter(Formatter):
-    def __init__(self, *args, producer: EventProducer, **kwargs):
+    def __init__(self, *args, event_producer: EventProducer, **kwargs):
         super().__init__(*args, **kwargs)
         self._data_formatter = JsonFormatter(*args, **kwargs)
-        self._producer = producer
+        self._event_producer = event_producer
 
     def format(self, record: LogRecord):
         with _no_logging():
@@ -146,7 +146,7 @@ class VentyFormatter(Formatter):
                 assert message is not None
                 result = CloudEvent.parse_raw(message)
             else:
-                result = self._producer.produce_event(
+                result = self._event_producer.produce_event(
                     _event_attributes(record, data),
                     data,
                 )
@@ -154,10 +154,10 @@ class VentyFormatter(Formatter):
 
 
 def venty_log_handler(
-    producer: EventProducer,
+    event_producer: EventProducer,
     level: int = logging.INFO,
 ) -> StreamHandler:
     result = StreamHandler()
-    result.setFormatter(VentyFormatter(producer))
+    result.setFormatter(VentyFormatter(event_producer=event_producer))
     result.setLevel(level)
     return result
