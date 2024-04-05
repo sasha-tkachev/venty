@@ -15,13 +15,14 @@ class AggregateStore:
         self._event_store = event_store
 
     def store(self, aggregate: AggregateRoot):
-        append_events(
-            self._event_store,
-            _aggregate_stream(aggregate.aggregate_uuid()),
-            expected_version=aggregate.aggregate_version(),
-            events=aggregate.uncommitted_changes(),
-        )
-        aggregate.mark_changes_as_committed()
+        if uncommitted_changes := aggregate.uncommitted_changes():
+            append_events(
+                self._event_store,
+                _aggregate_stream(aggregate.aggregate_uuid()),
+                expected_version=aggregate.aggregate_version(),
+                events=uncommitted_changes,
+            )
+            aggregate.mark_changes_as_committed()
 
     def load(
         self, aggregate_cls: Type[AggregateRootT], uuid: AggregateUUID
