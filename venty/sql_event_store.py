@@ -1,6 +1,5 @@
 from uuid import uuid5, UUID
 
-from more_itertools import one
 from sqlalchemy.exc import IntegrityError
 
 from venty.settings import SQL_RECORDED_EVENTS_TABLE_NAME
@@ -90,6 +89,7 @@ def _stream_metadata(
             func.max(recorded_event_alias.stream_position), RecordedEventRow.stream_id
         )
         .filter(RecordedEventRow.stream_id == _stream_id(stream_name))
+        .group_by(RecordedEventRow.stream_id)
         .first()
     )
 
