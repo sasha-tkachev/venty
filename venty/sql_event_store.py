@@ -14,7 +14,7 @@ except ImportError:  # pragma: no cover # hard to test
 
 
 from datetime import timedelta
-from sqlalchemy import and_, or_, func
+from sqlalchemy import and_, or_, func, desc
 from typing import (
     Iterable,
     Optional,
@@ -82,14 +82,14 @@ def _stream_id(stream_name: StreamName) -> bytes:
 def _stream_metadata(
     stream_name: StreamName, session: Session
 ) -> Tuple[Union[StreamVersion, Literal[StreamState.NO_STREAM]], Optional[bytes]]:
-    recorded_event_alias = aliased(RecordedEventRow)
 
     stream_with_highest_position = (
         session.query(
-            func.max(recorded_event_alias.stream_position), RecordedEventRow.stream_id
+            func.max(RecordedEventRow.stream_position), RecordedEventRow.stream_id
         )
         .filter(RecordedEventRow.stream_id == _stream_id(stream_name))
         .group_by(RecordedEventRow.stream_id)
+        .order_by(desc(func.max(RecordedEventRow.stream_position)))
         .first()
     )
 
