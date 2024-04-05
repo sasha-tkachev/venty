@@ -8,7 +8,7 @@ from uuid import uuid4, UUID
 from contextlib import contextmanager
 import sys
 
-if sys.version_info <= (3, 8):
+if sys.version_info < (3, 9):
     from typing import OrderedDict as OrderedDictType
 
     EventProducers = OrderedDictType[UUID, Optional[EventProducer]]
