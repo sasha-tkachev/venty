@@ -1,6 +1,7 @@
-from datetime import datetime
+import sys
+from datetime import datetime, timezone
 from typing import Any, Dict, Optional, Callable, TypeVar
-from uuid import uuid4
+from uuid import uuid4, UUID, uuid5
 
 from cloudevents.pydantic import CloudEvent
 from cloudevents.sdk.event.attribute import (
@@ -31,6 +32,24 @@ class EventProducer:
 EventProducerT = TypeVar("EventProducerT", bound=EventProducer)
 
 
+def deterministic_id_factory(seed: int = 0) -> Callable[[], str]:
+    i = iter(range(sys.maxsize))
+
+    def _next() -> str:
+        return str(uuid5(UUID(int=seed), str(next(i))))
+
+    return _next
+
+
+def deterministic_time_factory() -> Callable[[], datetime]:
+    i = iter(range(sys.maxsize))
+
+    def _next() -> datetime:
+        return datetime.fromtimestamp(next(i), tz=timezone.utc)
+
+    return _next
+
+
 class SimpleEventProducer(EventProducer):
     def __init__(
         self,
@@ -58,3 +77,17 @@ class SimpleEventProducer(EventProducer):
         actual_attributes["id"] = self._id_selection_algorithm()
         actual_attributes["time"] = self._time_selection_algorithm()
         return CloudEvent.create(actual_attributes, data)
+
+
+def testing_event_producer(
+    *,
+    source: Optional[EventSource] = EventSource("fake-source"),
+    default_attributes: Optional[Dict[str, Any]] = None,
+    seed: int = 0,
+) -> EventProducer:
+    return SimpleEventProducer(
+        source=source,
+        default_attributes=default_attributes,
+        id_selection_algorithm=deterministic_id_factory(seed),
+        time_selection_algorithm=deterministic_time_factory(),
+    )
