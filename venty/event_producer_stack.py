@@ -6,9 +6,14 @@ from venty.event_producer import EventProducer, EventProducerT
 from collections import OrderedDict
 from uuid import uuid4, UUID
 from contextlib import contextmanager
+import sys
 
+if sys.version_info <= (3, 8):
+    from typing import OrderedDict as OrderedDictType
 
-EventProducers = OrderedDict[UUID, Optional[EventProducer]]
+    EventProducers = OrderedDictType[UUID, Optional[EventProducer]]
+else:
+    EventProducers = OrderedDict[UUID, Optional[EventProducer]]
 
 
 def _last(event_producers: EventProducers) -> EventProducer:
