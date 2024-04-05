@@ -1,7 +1,9 @@
-from time import time
+from uuid import uuid5, UUID
+
+from more_itertools import one
 from sqlalchemy.exc import IntegrityError
 
-from venty.settings import SQL_STREAMS_TABLE_NAME, SQL_RECORDED_EVENTS_TABLE_NAME
+from venty.settings import SQL_RECORDED_EVENTS_TABLE_NAME
 from venty.timing import assert_timeout_not_supported
 
 try:
@@ -31,8 +33,7 @@ from cloudevents.conversion import to_json, from_json
 from sqlalchemy import (
     Column,
     Integer,
-    String,
-    ForeignKey,
+    BINARY,
     Text,
     UniqueConstraint,
 )
@@ -57,16 +58,11 @@ from venty.strong_types import (
 Base = declarative_base()
 
 
-class StreamRow(Base):
-    __tablename__ = SQL_STREAMS_TABLE_NAME
-    id: int = Column(Integer, primary_key=True)
-    stream_name: StreamName = Column(String(255), nullable=False, unique=True)
-
-
 class RecordedEventRow(Base):
     __tablename__ = SQL_RECORDED_EVENTS_TABLE_NAME
     id: CommitPosition = Column(Integer, primary_key=True)
-    stream_id: int = Column(Integer, ForeignKey("{}.id".format(SQL_STREAMS_TABLE_NAME)))
+    # tradeoff between storage and performance
+    stream_id: bytes = Column(BINARY(16), nullable=False)
     stream_position: StreamVersion = Column(Integer, nullable=False)  # TODO: rename
     event: str = Column(Text, nullable=False)  # Added payload field here
 
@@ -77,25 +73,23 @@ class RecordedEventRow(Base):
     )
 
 
+_uuid_base = UUID("c3569d87-e091-4757-92e6-e2da40e00129")
+
+
+def _stream_id(stream_name: StreamName) -> bytes:
+    return uuid5(_uuid_base, stream_name).bytes
+
+
 def _stream_metadata(
     stream_name: StreamName, session: Session
-) -> Tuple[Union[StreamVersion, Literal[StreamState.NO_STREAM]], Optional[int]]:
+) -> Tuple[Union[StreamVersion, Literal[StreamState.NO_STREAM]], Optional[bytes]]:
     recorded_event_alias = aliased(RecordedEventRow)
 
     stream_with_highest_position = (
         session.query(
-            func.max(recorded_event_alias.stream_position).label(
-                "highest_stream_position"
-            ),
-            StreamRow.id,
+            func.max(recorded_event_alias.stream_position), RecordedEventRow.stream_id
         )
-        .join(
-            recorded_event_alias,
-            StreamRow.id == recorded_event_alias.stream_id,
-            isouter=True,
-        )
-        .filter(StreamRow.stream_name == stream_name)
-        .group_by(StreamRow.id)
+        .filter(RecordedEventRow.stream_id == _stream_id(stream_name))
         .first()
     )
 
@@ -104,13 +98,15 @@ def _stream_metadata(
         return StreamState.NO_STREAM, None
     else:
         highest_stream_position, stream_id = stream_with_highest_position
+        if highest_stream_position is None:
+            return StreamState.NO_STREAM, stream_id
         return StreamVersion(highest_stream_position), stream_id
 
 
 def _record_event_rows(
     events: Sequence[CloudEvent],
     last_stream_position: Union[StreamVersion, Literal[StreamState.NO_STREAM]],
-    stream_id: int,
+    stream_id: bytes,
 ) -> Sequence[RecordedEventRow]:
     return [
         RecordedEventRow(
@@ -123,7 +119,9 @@ def _record_event_rows(
 
 
 def _row_to_recorded_event(
-    event_row: RecordedEventRow, stream_row: StreamRow, event_type: Type[AnyCloudEvent]
+    event_row: RecordedEventRow,
+    stream_name_map: dict[bytes, StreamName],
+    event_type: Type[AnyCloudEvent],
 ) -> RecordedEvent:
     return RecordedEvent(
         commit_position=CommitPosition(
@@ -132,9 +130,7 @@ def _row_to_recorded_event(
         stream_position=StreamVersion(
             event_row.stream_position,
         ),
-        stream_name=StreamName(
-            stream_row.stream_name,
-        ),
+        stream_name=stream_name_map[bytes(event_row.stream_id)],
         event=from_json(
             event_type,
             event_row.event,
@@ -150,19 +146,24 @@ def _query_streams(
 ) -> Iterable[RecordedEvent]:
     or_conditions = [
         and_(
-            StreamRow.stream_name == stream_name,
+            RecordedEventRow.stream_id == _stream_id(stream_name),
             RecordedEventRow.stream_position >= instruction.stream_position_or_default,
             RecordedEventRow.stream_position
             <= instruction.stream_position_or_default + instruction.limit,
         )
         for stream_name, instruction in instructions.items()
     ]
-
+    stream_name_map = {
+        _stream_id(stream_name): stream_name for stream_name in instructions
+    }
     # Construct the query
     return (
-        _row_to_recorded_event(recorded_row, stream_row, event_type)
-        for recorded_row, stream_row in session.query(RecordedEventRow, StreamRow)
-        .join(StreamRow, StreamRow.id == RecordedEventRow.stream_id)
+        _row_to_recorded_event(
+            recorded_row,  # noqa
+            stream_name_map,
+            event_type,
+        )
+        for recorded_row in session.query(RecordedEventRow)
         .filter(or_(*or_conditions))
         .order_by(
             RecordedEventRow.stream_position.desc()
@@ -184,15 +185,6 @@ def _last_stream_position(
     return stream_position  # type: ignore
 
 
-def _create_stream(stream_name: StreamName, session: Session) -> int:
-    stream = StreamRow(
-        id=int(time() * 1000),  # it is ok if we have a race, we will just re-try
-        stream_name=stream_name,
-    )
-    session.add(stream)
-    return stream.id
-
-
 def _commit_append_events(
     stream_name: StreamName,
     expected_version: ExpectedVersion,
@@ -203,8 +195,7 @@ def _commit_append_events(
     if not is_stream_version_correct(expected_version, lambda: stream_version):
         return None
     if stream_id is None:
-        stream_id = _create_stream(stream_name, session)
-        session.commit()
+        stream_id = _stream_id(stream_name)
 
     row_records = _record_event_rows(
         events=events,
@@ -234,6 +225,8 @@ class SqlEventStore(EventStore):
     ) -> Optional[CommitPosition]:
         assert_timeout_not_supported(timeout)
         consumed_events = list(events)
+        if not events:
+            return None
         while True:
             with self._session_factory() as session:
                 try:
