@@ -16,9 +16,10 @@ Event Driven Tooling built around [CloudEvents](https://cloudevents.io/)
  * [Aggregate Store Implementation](venty/aggregate_store.py)
     * Based on the event store interface.
  * [Strong Types](venty/strong_types.py) for event driven development.
- * Log Formatter as CloudEvents (Planned)
+ * [Log Formatter as CloudEvents](venty/event_logger.py)
  * Correlation-ID and Causation-ID augmentation (Planned) 
  * Claim Check (Planned)
+ * [Object Storage abstraction](venty/object_storage.py)
  
  
  ## Configuration
