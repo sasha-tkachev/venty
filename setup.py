@@ -18,7 +18,7 @@ if __name__ == "__main__":
     setuptools.setup(
         name="venty",
         version="6.1.0",
-        author="Alexander Tkachev",
+        author="Sasha Tkachev",
         author_email="sasha64sasha@gmail.com",
         description="Venty",
         long_description_content_type="text/markdown",
