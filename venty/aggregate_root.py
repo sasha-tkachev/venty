@@ -1,4 +1,3 @@
-from dataclasses import field
 from typing import List, NewType, Iterable, TypeVar
 from uuid import UUID
 
@@ -51,3 +50,9 @@ class AggregateRoot(BaseModel):
 
 
 AggregateRootT = TypeVar("AggregateRootT", bound=AggregateRoot)
+
+
+def subject_aggregate(event: CloudEvent) -> AggregateUUID:
+    if subject := event.get("subject"):
+        return AggregateUUID(UUID(subject))
+    raise ValueError("venty.MissingSubject")
