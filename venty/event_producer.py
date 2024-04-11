@@ -1,13 +1,14 @@
 import sys
 from datetime import datetime, timezone
-from typing import Any, Dict, Optional, Callable, TypeVar
-from uuid import uuid4, UUID, uuid5
+from typing import Any, Callable, Dict, Optional, TypeVar
+from uuid import UUID, uuid4, uuid5
 
 from cloudevents.pydantic import CloudEvent
 from cloudevents.sdk.event.attribute import (
     default_id_selection_algorithm,
     default_time_selection_algorithm,
 )
+from pydantic import BaseModel
 
 from venty.strong_types import EventSource
 
@@ -27,6 +28,22 @@ class EventProducer:
         self, attributes: Dict[str, Any], data: Optional[Any]
     ) -> CloudEvent:
         raise NotImplementedError()
+
+
+def produce_simple_event(
+    type_: str,
+    *,
+    attributes: Optional[Dict[str, Any]] = None,
+    data: Optional[Any] = None,
+    event_producer: EventProducer,
+) -> CloudEvent:
+    if attributes is None:
+        attributes = {}
+    attributes = attributes.copy()  # prevent mutation
+    attributes["type"] = type_
+    if isinstance(data, BaseModel):
+        data = data.json(exclude_none=True)
+    return event_producer.produce_event(attributes, data)
 
 
 EventProducerT = TypeVar("EventProducerT", bound=EventProducer)
