@@ -120,7 +120,7 @@ def _record_event_rows(
 
 def _row_to_recorded_event(
     event_row: RecordedEventRow,
-    stream_name_map: dict[bytes, StreamName],
+    stream_name_map: Dict[bytes, StreamName],
     event_type: Type[AnyCloudEvent],
 ) -> RecordedEvent:
     return RecordedEvent(
