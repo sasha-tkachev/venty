@@ -1,4 +1,4 @@
-from typing import Optional, TypeVar, Any
+from typing import Optional, TypeVar, Any, Type
 
 from cloudevents.pydantic import CloudEvent
 
@@ -6,7 +6,7 @@ from cloudevents.pydantic import CloudEvent
 T = TypeVar("T")
 
 
-def may_be(type_: type[T], value: Any) -> Optional[T]:
+def may_be(type_: Type[T], value: Any) -> Optional[T]:
     if isinstance(value, type_):
         return value
     if issubclass(type_, CloudEvent):
@@ -15,7 +15,7 @@ def may_be(type_: type[T], value: Any) -> Optional[T]:
     return None
 
 
-def must_be(type_: type[T], value: Any) -> T:
+def must_be(type_: Type[T], value: Any) -> T:
     result = may_be(type_, value)
     if result is None:
         raise ValueError(f"Expected {type_.__name__}, got {value.__class__.__name__}")
