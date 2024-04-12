@@ -1,4 +1,4 @@
-from typing import Optional, TypeVar, Any, Type
+from typing import Optional, TypeVar, Any, Type, List
 
 from cloudevents.pydantic import CloudEvent
 
@@ -22,5 +22,5 @@ def must_be(type_: Type[T], value: Any) -> T:
     return result
 
 
-def must_be_list_of(type_: Type[T], value: Any) -> list[T]:
+def must_be_list_of(type_: Type[T], value: Any) -> List[T]:
     return [must_be(type_, item) for item in must_be(list, value)]
