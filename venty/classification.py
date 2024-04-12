@@ -13,3 +13,10 @@ def may_be(type_: type[T], value: Any) -> Optional[T]:
         if value.type == type_.__fields__["type"].default:
             return type_.parse_obj(value.dict())
     return None
+
+
+def must_be(type_: type[T], value: Any) -> T:
+    result = may_be(type_, value)
+    if result is None:
+        raise ValueError(f"Expected {type_.__name__}, got {value.__class__.__name__}")
+    return result

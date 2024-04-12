@@ -1,9 +1,10 @@
 from typing import Literal
 
+import pytest
 from cloudevents.pydantic import CloudEvent
 from pydantic import BaseModel
 
-from venty.classification import may_be
+from venty.classification import may_be, must_be
 
 
 class MyData(BaseModel):
@@ -28,3 +29,12 @@ def test_may_be_cloudevent():
         assert result.data.x == 42
     else:
         raise AssertionError("Expected a result")
+
+
+def test_must_be_pod():
+    assert must_be(str, "hello") == "hello"
+    assert must_be(int, 42) == 42
+    with pytest.raises(ValueError, match="Expected int, got str"):
+        must_be(int, "42")
+    with pytest.raises(ValueError, match="Expected int, got float"):
+        must_be(int, 42.0)
