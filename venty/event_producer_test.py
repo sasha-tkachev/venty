@@ -1,10 +1,15 @@
 from datetime import datetime
+from typing import Literal
 
 from cloudevents.conversion import to_dict
-
+from cloudevents.pydantic import CloudEvent
 
 from venty.event_producer import SimpleEventProducer, testing_event_producer
 from venty.strong_types import EventSource
+
+
+class MyType(CloudEvent):
+    type: Literal["my-type"] = "my-type"
 
 
 def test_event_producer_sanity():
@@ -14,7 +19,7 @@ def test_event_producer_sanity():
         time_selection_algorithm=lambda: datetime(year=2024, month=1, day=1),
         default_attributes={"subject": "hello"},
     )
-    result = producer.produce_event({"type": "my-type"}, None)
+    result = producer.produce_event(MyType, None)
     assert to_dict(result) == {
         "data": None,
         "datacontenttype": None,
@@ -32,7 +37,7 @@ def test_fake_event_producer():
     producer = testing_event_producer(
         default_attributes={"subject": "hello"},
     )
-    result = producer.produce_event({"type": "my-type"}, None)
+    result = producer.produce_event(MyType, None)
     assert to_dict(result) == {
         "data": None,
         "datacontenttype": None,

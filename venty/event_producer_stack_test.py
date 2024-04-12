@@ -1,8 +1,19 @@
+from typing import Literal
+
 import pytest
+from cloudevents.pydantic import CloudEvent
 
 from venty.event_producer import SimpleEventProducer
 from venty.event_producer_stack import EventProducerStack
 from venty.strong_types import EventSource
+
+
+class MyType(CloudEvent):
+    type: Literal["my-type"] = "my-type"
+
+
+class YourType(CloudEvent):
+    type: Literal["your-type"] = "your-type"
 
 
 def test_event_producer_stack():
@@ -10,12 +21,12 @@ def test_event_producer_stack():
     your_producer = SimpleEventProducer(source=EventSource("your-source"))
     stack = EventProducerStack(my_producer)
 
-    a = stack.produce_event({"type": "my-type"}, None)
+    a = stack.produce_event(MyType, None)
     assert a.source == "my-source"
     with stack.scoped_event_producer(your_producer):
-        b = stack.produce_event({"type": "your-type"}, None)
+        b = stack.produce_event(YourType, None)
         assert b.source == "your-source"
-    c = stack.produce_event({"type": "my-type"}, None)
+    c = stack.produce_event(MyType, None)
     assert c.source == "my-source"
 
 
@@ -24,12 +35,12 @@ def test_event_producer_stack_should_pop_on_exception():
     your_producer = SimpleEventProducer(source=EventSource("your-source"))
     stack = EventProducerStack(my_producer)
 
-    a = stack.produce_event({"type": "my-type"}, None)
+    a = stack.produce_event(MyType, None)
     assert a.source == "my-source"
     with pytest.raises(ValueError):
         with stack.scoped_event_producer(your_producer):
-            b = stack.produce_event({"type": "your-type"}, None)
+            b = stack.produce_event(YourType, None)
             assert b.source == "your-source"
             raise ValueError("boom")
-    c = stack.produce_event({"type": "my-type"}, None)
+    c = stack.produce_event(MyType, None)
     assert c.source == "my-source"
