@@ -3,14 +3,12 @@ from datetime import datetime, timezone
 from typing import Any, Callable, Dict, Optional, TypeVar, Type, Union
 from uuid import UUID, uuid4, uuid5
 
-from cloudevents.pydantic import CloudEvent
 from cloudevents.sdk.event.attribute import (
     default_id_selection_algorithm,
     default_time_selection_algorithm,
 )
-from pydantic import BaseModel
 
-from venty.strong_types import EventSource
+from venty.strong_types import EventSource, CloudEventT
 
 
 def _ignore_invalid_attributes(attributes: Dict[str, Any]) -> Dict[str, Any]:
@@ -21,8 +19,6 @@ def _ignore_invalid_attributes(attributes: Dict[str, Any]) -> Dict[str, Any]:
 
 IdSelection = Callable[[], str]
 TimeSelection = Callable[[], datetime]
-
-CloudEventT = TypeVar("CloudEventT", bound=CloudEvent)
 
 AttributeValue = Union[str, int, UUID, bool]
 

@@ -1,5 +1,6 @@
 from typing import Optional, Any, Type, Dict
-from venty.event_producer import EventProducer, CloudEventT, AttributeValue
+from venty.event_producer import EventProducer, AttributeValue
+from venty.strong_types import CloudEventT
 
 
 class AuthEventProducer(EventProducer):

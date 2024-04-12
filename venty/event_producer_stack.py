@@ -5,9 +5,9 @@ from cloudevents.pydantic import CloudEvent
 from venty.event_producer import (
     EventProducer,
     EventProducerT,
-    CloudEventT,
     AttributeValue,
 )
+from venty.strong_types import CloudEventT
 from collections import OrderedDict
 from uuid import uuid4, UUID
 from contextlib import contextmanager
