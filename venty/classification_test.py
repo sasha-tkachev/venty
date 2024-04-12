@@ -4,7 +4,7 @@ import pytest
 from cloudevents.pydantic import CloudEvent
 from pydantic import BaseModel
 
-from venty.classification import may_be, must_be
+from venty.classification import may_be, must_be, must_be_list_of
 
 
 class MyData(BaseModel):
@@ -38,3 +38,9 @@ def test_must_be_pod():
         must_be(int, "42")
     with pytest.raises(ValueError, match="Expected int, got float"):
         must_be(int, 42.0)
+
+
+def test_must_be_list_of():
+    assert must_be_list_of(int, [1, 2, 3]) == [1, 2, 3]
+    with pytest.raises(ValueError, match="Expected int, got str"):
+        must_be_list_of(int, [1, 2, "3"])

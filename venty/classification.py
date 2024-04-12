@@ -20,3 +20,7 @@ def must_be(type_: type[T], value: Any) -> T:
     if result is None:
         raise ValueError(f"Expected {type_.__name__}, got {value.__class__.__name__}")
     return result
+
+
+def must_be_list_of(type_: type[T], value: Any) -> list[T]:
+    return [must_be(type_, item) for item in must_be(list, value)]
