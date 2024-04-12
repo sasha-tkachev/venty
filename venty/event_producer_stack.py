@@ -1,4 +1,4 @@
-from typing import Dict, Any, Optional, ContextManager
+from typing import Dict, Any, Optional, ContextManager, Type
 
 from cloudevents.pydantic import CloudEvent
 
@@ -35,7 +35,7 @@ class EventProducerStack(EventProducer):
 
     def produce_event(
         self,
-        type_: type[CloudEventT],
+        type_: Type[CloudEventT],
         data: Optional[Any],
         *,
         attributes: Optional[Dict[str, AttributeValue]] = None,
