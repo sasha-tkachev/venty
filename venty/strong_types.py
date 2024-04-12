@@ -1,6 +1,6 @@
 from typing import NewType, TypeVar
 
-from cloudevents.pydantic import CloudEvent
+from venty.cloudevent import CloudEvent
 
 StreamName = NewType("StreamName", str)
 StreamVersion = NewType("StreamVersion", int)

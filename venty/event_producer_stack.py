@@ -1,7 +1,4 @@
 from typing import Dict, Any, Optional, ContextManager, Type
-
-from cloudevents.pydantic import CloudEvent
-
 from venty.event_producer import (
     EventProducer,
     EventProducerT,

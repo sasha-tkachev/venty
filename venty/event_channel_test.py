@@ -1,4 +1,4 @@
-from cloudevents.pydantic import CloudEvent
+from venty.cloudevent import CloudEvent
 from mock import Mock
 from venty.event_channel import best_effort_publish_event
 

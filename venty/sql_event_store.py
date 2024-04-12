@@ -29,7 +29,7 @@ from typing import (
     Type,
 )
 
-from cloudevents.pydantic import CloudEvent
+from venty.cloudevent import CloudEvent
 from cloudevents.conversion import from_json, to_json
 from sqlalchemy import (
     Column,
@@ -105,13 +105,6 @@ def _stream_metadata(
         return StreamVersion(highest_stream_position), stream_id
 
 
-def _serialize_event(event: CloudEvent) -> bytes:
-    copied = event.copy()
-    if isinstance(copied.data, BaseModel):
-        copied.data = json.loads(copied.data.json(exclude_none=True))
-    return to_json(copied)
-
-
 def _record_event_rows(
     events: Sequence[CloudEvent],
     last_stream_position: Union[StreamVersion, Literal[StreamState.NO_STREAM]],
@@ -121,7 +114,7 @@ def _record_event_rows(
         RecordedEventRow(
             stream_id=stream_id,
             stream_position=last_stream_position + 1 + i,
-            event=_serialize_event(event),
+            event=event.json(exclude_none=True),
         )
         for i, event in enumerate(events)
     ]

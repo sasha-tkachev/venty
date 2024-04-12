@@ -1,8 +1,7 @@
-from dataclasses import dataclass
 from typing import Optional
 from uuid import UUID, uuid5
 
-from cloudevents.pydantic import CloudEvent
+from venty.cloudevent import CloudEvent
 
 from venty.aggregate_store import AggregateStore
 from venty.aggregate_root import AggregateUUID, AggregateRoot

@@ -2,7 +2,7 @@ from datetime import datetime
 from typing import Literal
 
 from cloudevents.conversion import to_dict
-from cloudevents.pydantic import CloudEvent
+from venty.cloudevent import CloudEvent
 
 from venty.event_producer import SimpleEventProducer, testing_event_producer
 from venty.strong_types import EventSource

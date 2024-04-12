@@ -1,7 +1,7 @@
 from typing import Literal
 
 import pytest
-from cloudevents.pydantic import CloudEvent
+from venty.cloudevent import CloudEvent
 from pydantic import BaseModel
 
 from venty.classification import may_be, must_be, must_be_list_of

@@ -2,7 +2,7 @@ from typing import Iterable
 from uuid import UUID, uuid5
 from datetime import timedelta, datetime, timezone
 from venty.strong_types import StreamName, EventType
-from cloudevents.pydantic.v2 import CloudEvent
+from venty.cloudevent import CloudEvent
 import time
 
 MY_STREAM_NAME = StreamName("my-stream")

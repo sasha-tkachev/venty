@@ -2,7 +2,7 @@ from typing import Callable, Any
 from uuid import UUID
 
 import pytest
-from cloudevents.pydantic import CloudEvent
+from venty.cloudevent import CloudEvent
 from sqlalchemy import create_engine
 from sqlalchemy.orm import sessionmaker, Session
 

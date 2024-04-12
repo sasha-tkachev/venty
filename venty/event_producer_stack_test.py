@@ -1,7 +1,7 @@
 from typing import Literal
 
 import pytest
-from cloudevents.pydantic import CloudEvent
+from venty.cloudevent import CloudEvent
 
 from venty.event_producer import SimpleEventProducer
 from venty.event_producer_stack import EventProducerStack

@@ -1,6 +1,6 @@
 from typing import Optional, TypeVar, Any, Type, List
 
-from cloudevents.pydantic import CloudEvent
+from venty.cloudevent import CloudEvent
 
 
 T = TypeVar("T")

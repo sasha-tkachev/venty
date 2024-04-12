@@ -4,7 +4,7 @@ from datetime import datetime, timezone
 from logging import Formatter, LogRecord, StreamHandler
 from typing import Any, Dict, TypeVar, Optional
 
-from cloudevents.pydantic import CloudEvent
+from venty.cloudevent import CloudEvent
 from pythonjsonlogger.jsonlogger import JsonFormatter
 import json
 from venty.event_producer import EventProducer
