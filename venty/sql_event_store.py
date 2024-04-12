@@ -1,5 +1,7 @@
+import json
 from uuid import uuid5, UUID
 
+from pydantic import BaseModel
 from sqlalchemy.exc import IntegrityError
 
 from venty.settings import SQL_RECORDED_EVENTS_TABLE_NAME
@@ -27,8 +29,8 @@ from typing import (
     Type,
 )
 
-from cloudevents.abstract import CloudEvent, AnyCloudEvent
-from cloudevents.conversion import to_json, from_json
+from cloudevents.pydantic import CloudEvent
+from cloudevents.conversion import from_json, to_json
 from sqlalchemy import (
     Column,
     Integer,
@@ -37,7 +39,7 @@ from sqlalchemy import (
     UniqueConstraint,
 )
 from sqlalchemy.orm import declarative_base
-from sqlalchemy.orm import Session, aliased
+from sqlalchemy.orm import Session
 
 from venty import EventStore
 from venty.event_store import (
@@ -103,6 +105,13 @@ def _stream_metadata(
         return StreamVersion(highest_stream_position), stream_id
 
 
+def _serialize_event(event: CloudEvent) -> bytes:
+    copied = event.copy()
+    if isinstance(copied.data, BaseModel):
+        copied.data = json.loads(copied.data.json(exclude_none=True))
+    return to_json(copied)
+
+
 def _record_event_rows(
     events: Sequence[CloudEvent],
     last_stream_position: Union[StreamVersion, Literal[StreamState.NO_STREAM]],
@@ -112,7 +121,7 @@ def _record_event_rows(
         RecordedEventRow(
             stream_id=stream_id,
             stream_position=last_stream_position + 1 + i,
-            event=to_json(event),
+            event=_serialize_event(event),
         )
         for i, event in enumerate(events)
     ]
@@ -121,7 +130,7 @@ def _record_event_rows(
 def _row_to_recorded_event(
     event_row: RecordedEventRow,
     stream_name_map: Dict[bytes, StreamName],
-    event_type: Type[AnyCloudEvent],
+    event_type: Type[CloudEvent],
 ) -> RecordedEvent:
     return RecordedEvent(
         commit_position=CommitPosition(
@@ -142,7 +151,7 @@ def _query_streams(
     session: Session,
     instructions: Dict[StreamName, ReadInstruction],
     backwards: bool,
-    event_type: Type[AnyCloudEvent],
+    event_type: Type[CloudEvent],
 ) -> Iterable[RecordedEvent]:
     or_conditions = [
         and_(
@@ -210,7 +219,7 @@ def _commit_append_events(
 class SqlEventStore(EventStore):
 
     def __init__(
-        self, session_factory: Callable[[], Session], event_type: Type[AnyCloudEvent]
+        self, session_factory: Callable[[], Session], event_type: Type[CloudEvent]
     ):
         self._session_factory = session_factory
         self._event_type = event_type
