@@ -1,9 +1,13 @@
 from typing import Type
+from uuid import UUID, uuid5
+
+from venty.cloudevent import CloudEvent
+from pydantic import Field
 
 from venty import EventStore
 from venty.event_store import append_events, read_stream_no_metadata
 from venty.aggregate_root import AggregateRoot, AggregateUUID, AggregateRootT
-from venty.strong_types import StreamName, StreamVersion
+from venty.strong_types import StreamName
 
 
 def _aggregate_stream(uuid: AggregateUUID) -> StreamName:
