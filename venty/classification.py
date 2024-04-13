@@ -24,3 +24,7 @@ def must_be(type_: Type[T], value: Any) -> T:
 
 def must_be_list_of(type_: Type[T], value: Any) -> List[T]:
     return [must_be(type_, item) for item in must_be(list, value)]
+
+
+def is_any_instance_of(type_: Type[T], values: List[Any]) -> bool:
+    return any(isinstance(value, type_) for value in values)
