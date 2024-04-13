@@ -110,7 +110,7 @@ class EventStore:
 
 
 def attempt_append_event(
-    repo: EventStore,
+    event_store: EventStore,
     stream_name: StreamName,
     *,
     expected_version: ExpectedVersion,
@@ -120,7 +120,7 @@ def attempt_append_event(
     """
     Syntax sugar to append a single event to a stream.
     """
-    return repo.attempt_append_events(
+    return event_store.attempt_append_events(
         stream_name=stream_name,
         expected_version=expected_version,
         events=(event,),
@@ -129,7 +129,7 @@ def attempt_append_event(
 
 
 def attempt_append_events(
-    repo: EventStore,
+    event_store: EventStore,
     stream_name: StreamName,
     *,
     expected_version: ExpectedVersion,
@@ -139,7 +139,7 @@ def attempt_append_events(
     """
     Syntax sugar to stay consistent with `append_event`
     """
-    return repo.attempt_append_events(
+    return event_store.attempt_append_events(
         stream_name=stream_name,
         expected_version=expected_version,
         events=events,
@@ -152,7 +152,7 @@ class WrongExpectedVersion(ValueError):
 
 
 def append_events(
-    repo: EventStore,
+    event_store: EventStore,
     stream_name: StreamName,
     *,
     expected_version: ExpectedVersion,
@@ -162,7 +162,7 @@ def append_events(
     """
     Syntax sugar to stay consistent with `append_event`
     """
-    result = repo.attempt_append_events(
+    result = event_store.attempt_append_events(
         stream_name=stream_name,
         expected_version=expected_version,
         events=events,
@@ -174,7 +174,7 @@ def append_events(
 
 
 def append_event(
-    repo: EventStore,
+    event_store: EventStore,
     stream_name: StreamName,
     *,
     expected_version: ExpectedVersion,
@@ -185,7 +185,7 @@ def append_event(
     Syntax sugar to append a single event to a stream.
     """
     return append_events(
-        repo=repo,
+        event_store=event_store,
         stream_name=stream_name,
         expected_version=expected_version,
         events=(event,),
@@ -194,7 +194,7 @@ def append_event(
 
 
 def read_stream(
-    repo: EventStore,
+    event_store: EventStore,
     stream_name: StreamName,
     *,
     stream_position: Optional[StreamVersion],
@@ -202,7 +202,7 @@ def read_stream(
     backwards: bool = False,
     timeout: Optional[timedelta] = None,
 ) -> Iterable[RecordedEvent]:
-    return repo.read_streams(
+    return event_store.read_streams(
         {
             stream_name: ReadInstruction(
                 stream_position=stream_position,
@@ -215,7 +215,7 @@ def read_stream(
 
 
 def read_stream_no_metadata(
-    repo: EventStore,
+    event_store: EventStore,
     stream_name: StreamName,
     *,
     stream_position: Optional[StreamVersion],
@@ -226,7 +226,7 @@ def read_stream_no_metadata(
     return (
         e.event
         for e in read_stream(
-            repo,
+            event_store,
             stream_name,
             stream_position=stream_position,
             limit=limit,
