@@ -4,8 +4,8 @@ from venty.strong_types import CloudEventT
 
 
 class AuthEventProducer(EventProducer):
-    def __init__(self, authoid: str, authtype: str, parent: EventProducer):
-        self._authoid = authoid
+    def __init__(self, authid: str, authtype: str, parent: EventProducer):
+        self._authid = authid
         self._authtype = authtype
         self._parent = parent
 
@@ -20,6 +20,6 @@ class AuthEventProducer(EventProducer):
             attributes = {}
         if ("authid" not in attributes) and ("authtype" not in attributes):
             # https://github.com/cloudevents/spec/blob/main/cloudevents/extensions/authcontext.md
-            attributes["authid"] = self._authoid
+            attributes["authid"] = self._authid
             attributes["authtype"] = self._authtype
         return self._parent.produce_event(type_, data, attributes=attributes)
