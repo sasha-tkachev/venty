@@ -92,10 +92,10 @@ class SimpleEventProducer(EventProducer):
         if attributes is None:
             attributes = {}
         actual_attributes = self._default_attributes.copy()
-        actual_attributes.update(attributes)
         actual_attributes["source"] = self._source
         actual_attributes["id"] = self._id_selection_algorithm()
         actual_attributes["time"] = self._time_selection_algorithm()
+        actual_attributes.update(attributes)
         return type_.create(_normalize_attributes(actual_attributes), data)
 
 
