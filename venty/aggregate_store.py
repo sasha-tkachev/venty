@@ -1,3 +1,4 @@
+from contextlib import contextmanager
 from typing import Type
 from uuid import UUID, uuid5
 
@@ -40,3 +41,11 @@ class AggregateStore:
             )
         )
         return result
+
+
+@contextmanager
+def finally_store(aggregate: AggregateRootT, store: AggregateStore) -> AggregateRootT:
+    try:
+        yield aggregate
+    finally:
+        store.store(aggregate)
