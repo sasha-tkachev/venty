@@ -147,8 +147,7 @@ class VentyFormatter(Formatter):
                 result = CloudEvent.parse_raw(message)
             else:
                 result = self._event_producer.produce_event(
-                    _event_attributes(record, data),
-                    data,
+                    CloudEvent, data, attributes=_event_attributes(record, data)
                 )
             return result.json(exclude_none=True)
 
