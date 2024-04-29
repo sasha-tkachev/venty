@@ -64,3 +64,11 @@ def apply_events(
     for events in events:
         aggregate.apply(events)
     return aggregate
+
+
+def apply_event(event: CloudEvent, aggregate: AggregateRootT) -> AggregateRootT:
+    """
+    Exists as a syntax sugar to match `apply_events`.
+    """
+    aggregate.apply(event)
+    return aggregate
