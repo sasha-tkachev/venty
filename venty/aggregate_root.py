@@ -72,3 +72,8 @@ def apply_event(event: CloudEvent, aggregate: AggregateRootT) -> AggregateRootT:
     """
     aggregate.apply(event)
     return aggregate
+
+
+def applied_event(event: CloudEvent, aggregate: AggregateRootT) -> CloudEvent:
+    aggregate.apply(event)
+    return event
