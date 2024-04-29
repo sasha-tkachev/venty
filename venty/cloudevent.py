@@ -1,5 +1,6 @@
 import json
-from typing import Dict, Any
+from datetime import datetime
+from typing import Dict, Any, Iterable
 
 from cloudevents.conversion import to_json
 from cloudevents.pydantic import CloudEvent as _CloudEvent
@@ -30,3 +31,31 @@ class CloudEvent(_CloudEvent):
             to_serialize.data = json.loads(self.data.json(exclude_none=True))
 
         return json.loads(to_json(to_serialize))  # type: ignore
+
+
+def _normalize_for_testing(value: Any) -> Any:
+    if isinstance(value, datetime):
+        return value.isoformat()
+    return value
+
+
+def _should_exclude_from_dict(key: str, slim: bool) -> bool:
+    if key == "specversion":
+        return True
+    if slim and key in {"time", "source", "id"}:
+        return True
+    return False
+
+
+def comparing_dict(event: CloudEvent, slim: bool = False) -> Dict[str, Any]:
+    return {
+        k: _normalize_for_testing(v)
+        for k, v in event.dict(exclude_none=True).items()
+        if not _should_exclude_from_dict(k, slim)
+    }
+
+
+def comparing_dicts(
+    events: Iterable[CloudEvent], slim: bool = False
+) -> list[Dict[str, Any]]:
+    return [comparing_dict(e, slim=slim) for e in events]

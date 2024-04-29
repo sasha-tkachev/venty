@@ -99,7 +99,7 @@ class SimpleEventProducer(EventProducer):
         return type_.create(_normalize_attributes(actual_attributes), data)
 
 
-def testing_event_producer(
+def fake_event_producer(
     *,
     source: Optional[EventSource] = EventSource("fake-source"),
     default_attributes: Optional[Dict[str, Any]] = None,

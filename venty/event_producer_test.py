@@ -4,7 +4,7 @@ from typing import Literal
 from cloudevents.conversion import to_dict
 from venty.cloudevent import CloudEvent
 
-from venty.event_producer import SimpleEventProducer, testing_event_producer
+from venty.event_producer import SimpleEventProducer, fake_event_producer
 from venty.strong_types import EventSource
 
 
@@ -34,7 +34,7 @@ def test_event_producer_sanity():
 
 
 def test_fake_event_producer():
-    producer = testing_event_producer(
+    producer = fake_event_producer(
         default_attributes={"subject": "hello"},
     )
     result = producer.produce_event(MyType, None)
