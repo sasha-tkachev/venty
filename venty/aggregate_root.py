@@ -56,3 +56,11 @@ def subject_aggregate(event: CloudEvent) -> AggregateUUID:
     if subject := event.get("subject"):
         return AggregateUUID(UUID(subject))
     raise ValueError("venty.MissingSubject")
+
+
+def apply_events(
+    events: Iterable[CloudEvent], aggregate: AggregateRootT
+) -> AggregateRootT:
+    for events in events:
+        aggregate.apply(events)
+    return aggregate
